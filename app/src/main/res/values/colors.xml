@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="green">#5BB3F4</color>
+    <color name="blue">#183883</color>
+    <color name="blue_dark">#0D47A1</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="gray">#757575</color>
+    <color name="red">#D32F2F</color>
+    <color name="background">#dce3ff</color>
+    <color name="background_card">#cbcfd3</color>
+    <color name="pink_primary">#E91E63</color>
+    <color name="pink_dark">#AD1457</color>
+    <color name="pink_light">#F8BBD0</color>
+
+    <color name="card_bg">#11DDF8</color>
+    <color name="card_border">#E91E63</color>
+
+    <color name="text_primary">#212121</color>
+    <color name="simmer">#BABABA</color>
+
+    <color name="text_dark">#212121</color>
+
+    <color name="pink">#F60658</color>
+    <color name="primaryBlue">#1E88E5</color>
+    <color name="primaryLightBlue">#90CAF9</color>
+
+
+
+
+</resources>

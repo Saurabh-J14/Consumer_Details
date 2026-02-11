@@ -1,0 +1,528 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+
+    tools:context=".ui.UpdateActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/headerView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/blue_dark"
+        android:fitsSystemWindows="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            android:visibility="visible"
+            android:background="@color/blue_dark"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:title="consumer Details"
+            app:navigationIcon="@drawable/ic_back"
+            app:titleTextColor="@color/white" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/headerView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Consumer Number"
+                    android:textStyle="bold"
+                    android:textSize="11sp"
+                    android:textColor="@color/black"/>
+
+                <TextView
+                    android:id="@+id/etconsumerno"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:hint="Consumer Number"
+                    android:padding="5dp"
+                    android:textColor="@color/black"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Meter Number"
+                    android:textStyle="bold"
+                    android:textSize="11sp"
+                    android:textColor="@color/black"/>
+
+                <TextView
+                    android:id="@+id/etMeter_no"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:padding="5dp"
+                    android:textSize="11sp"
+                    android:hint="Meter Number"
+                    android:textColor="@color/black"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="DTC Name"
+                    android:textStyle="bold"
+                    android:textSize="11sp"
+                    android:textColor="@color/black"/>
+
+                <EditText
+                    android:id="@+id/etdtc_name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:hint="DTC Name"
+                    android:padding="5dp"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Dtc Code"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+
+                <TextView
+                    android:id="@+id/txtdtcCode"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:padding="5dp"
+                    android:hint="Dtc Code"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Voltage"
+                    android:textStyle="bold"
+                    android:textSize="11sp"
+                    android:textColor="@color/black"/>
+
+                <EditText
+                    android:id="@+id/etvoltage"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:hint="Voltage"
+                    android:padding="5dp"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="SanctionedLoad"
+                    android:textStyle="bold"
+                    android:textSize="11sp"
+                    android:textColor="@color/black"/>
+
+                <EditText
+                    android:id="@+id/etsanctionedload"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:hint="SanctionedLoad"
+                    android:padding="5dp"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Latitude"
+                    android:textStyle="bold"
+                    android:textSize="11sp"
+                    android:textColor="@color/black"/>
+
+                <EditText
+                    android:id="@+id/etlatitude"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:hint="Latitude"
+                    android:padding="5dp"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Logitude"
+                    android:textStyle="bold"
+                    android:textSize="11sp"
+                    android:textColor="@color/black"/>
+
+                <EditText
+                    android:id="@+id/etcircle_name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:hint="Circle"
+                    android:padding="5dp"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+
+
+
+
+
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Create On"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+
+                <TextView
+                    android:id="@+id/txt_Created"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:padding="5dp"
+                    android:hint="Created On"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="SubstationName"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+
+                <TextView
+                    android:id="@+id/txt_Substation"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:padding="5dp"
+                    android:hint="SubstationName"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Location"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+
+                <TextView
+                    android:id="@+id/txtlocation"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:padding="5dp"
+                    android:hint="Location"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Mobile No"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+
+                <TextView
+                    android:id="@+id/txt_Mobileno"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:padding="5dp"
+                    android:hint="Mobile No"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="User Id"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+
+                <TextView
+                    android:id="@+id/txtUserid"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:padding="5dp"
+                    android:hint="User Id"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="FeederName"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+
+                <TextView
+                    android:id="@+id/txt_Feedername"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:hint="FeederName"
+                    android:padding="5dp"
+                    android:textColor="@color/black"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Feeder ID"
+                    android:textStyle="bold"
+                    android:textSize="11sp"
+                    android:textColor="@color/black"/>
+
+                <EditText
+                    android:id="@+id/etfeedr"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:hint="Feeder ID"
+                    android:padding="5dp"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Phase "
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+
+                <TextView
+                    android:id="@+id/etphase"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:padding="5dp"
+                    android:hint="Phase"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginVertical="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Image Url"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+
+                <TextView
+                    android:id="@+id/imageurl"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/tv_background"
+                    android:padding="5dp"
+                    android:hint="Image Url"
+                    android:textColor="@color/black"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+
+
+
+            <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+                android:id="@+id/btnok"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:layout_marginBottom="15dp"
+                android:layout_marginStart="210dp"
+                android:layout_marginEnd="15dp"
+                android:text="Ok"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:backgroundTint="@color/blue"
+                android:gravity="center" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

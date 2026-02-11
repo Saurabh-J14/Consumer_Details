@@ -1,0 +1,201 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="10dp"
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="15dp"/>
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="58dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="12dp"/>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="58dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="8dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@color/background"-->
+<!--            android:layout_marginEnd="75dp"/>-->
+
+    </LinearLayout>
+
+</RelativeLayout>

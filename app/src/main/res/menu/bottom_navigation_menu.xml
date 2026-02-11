@@ -1,0 +1,24 @@
+<!-- res/menu/bottom_nav_menu.xml -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_dashboard"
+        android:icon="@drawable/dashboard"
+        android:title="@string/dashboard" />
+
+    <item
+        android:id="@+id/menu_update"
+        android:icon="@drawable/update"
+        android:title="@string/updates" />
+
+    <item
+        android:id="@+id/menu_pending"
+        android:icon="@drawable/pending"
+        android:title="@string/consumer_pending" />
+
+    <item
+        android:id="@+id/menu_total"
+        android:icon="@drawable/total"
+        android:title="@string/total_consumer" />
+
+</menu>

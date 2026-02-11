@@ -1,0 +1,53 @@
+<resources>
+    <string name="app_name">Consumer Details</string>
+    <string name="meter_number">Meter Number</string>
+    <string name="meter_numbers">Meter Number</string>
+    <string name="consumer_number">Consumer Number</string>
+    <string name="consumer_numbers">Consumer Number</string>
+    <string name="building_id">Building ID</string>
+    <string name="buildings_id">Building ID</string>
+    <string name="phase_designations">Phase Designation</string>
+    <string name="phase_designation">Phase Designation</string>
+    <string name="voltage">Voltage</string>
+    <string name="voltages">Voltage</string>
+    <string name="region_name">Region Name</string>
+    <string name="region_names">Region Name</string>
+    <string name="circle_name">Circle Name</string>
+    <string name="circle_names">Circle Name</string>
+    <string name="dtc_name">DTC Name</string>
+    <string name="dtc_names">DTC Name</string>
+    <string name="dtc_code">DTC Code</string>
+    <string name="dtc_codes">DTC Code</string>
+    <string name="sanctionedloads">SanctionedLoad</string>
+    <string name="sanctionedload">SanctionedLoad</string>
+    <string name="consumerstatus">ConsumerStatus</string>
+    <string name="consumerstatuss">ConsumerStatus</string>
+    <string name="save">Save</string>
+    <string name="feeder_id">Feeder Id</string>
+    <string name="feeder_ids">Feeder Id</string>
+    <string name="find">Find</string>
+    <string name="login">LOGIN</string>
+    <string name="password">Password</string>
+    <string name="user_id">User ID</string>
+    <string name="logout">Logout</string>
+    <string name="list">List</string>
+    <string name="user_details">User Details</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="total_pending">Total pending</string>
+    <string name="current_update">Current Update</string>
+    <string name="total_update">Update</string>
+    <string name="consumer_pending">Pending</string>
+    <string name="total_consumer">Total Consumer</string>
+    <string name="updates">Update</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="total_count">Total Count</string>
+    <string name="consumer_details">Consumer Details</string>
+    <string name="tatalupdate"> Update</string>
+    <string name="total_complete">Total Complete</string>
+    <string name="start">Start</string>
+    <string name="philtech">Philteche</string>
+    <string name="utilitynetapp">UtilityNet App</string>
+
+
+</resources>
