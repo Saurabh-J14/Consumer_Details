@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Consumer Details</string>
+    <string name="app_name">UtilityNet App</string>
     <string name="meter_number">Meter Number</string>
     <string name="meter_numbers">Meter Number</string>
     <string name="consumer_number">Consumer Number</string>

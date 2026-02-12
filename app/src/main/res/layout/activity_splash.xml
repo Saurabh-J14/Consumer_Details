@@ -31,6 +31,7 @@
         android:textColor="@color/black"
         android:textSize="28sp"
         android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/img"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -43,23 +44,23 @@
         android:layout_marginBottom="16dp"
         android:contentDescription="Consumer Details"
         android:scaleType="centerInside"
-        android:src="@drawable/logo"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.463"
         app:layout_constraintStart_toStartOf="parent" />
 
 
-        <TextView
+    <TextView
         android:id="@+id/textView"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center"
         android:text="Powered by Traident TechLabs"
         android:textColor="@color/black"
-        android:textSize="12sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView"
-        tools:ignore="SmallSp" />
+        android:textSize="15sp"
+        android:gravity="center"
+        android:layout_marginBottom="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

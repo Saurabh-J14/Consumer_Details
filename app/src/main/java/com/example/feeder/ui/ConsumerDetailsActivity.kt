@@ -6,23 +6,22 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.*
-import android.location.Geocoder
 import android.os.Bundle
 import android.provider.MediaStore
+import android.text.TextUtils
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.feeder.R
 import com.example.feeder.data.remote.RetrofitClient
 import com.example.feeder.databinding.ActivityConsumerDetailsBinding
 import com.example.feeder.ui.base.ConsumerUpdateViewModelFactory
 import com.example.feeder.ui.viewModel.ConsumerUpdateViewModel
 import com.example.feeder.utils.FusedLocationTracker
 import com.example.feeder.utils.PrefManager
-import com.google.android.gms.location.LocationServices
-import com.google.gson.Gson
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -33,7 +32,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
     private val CAMERA_REQ = 1001
     private val PERMISSION_REQ = 2001
-
     private var latitude = 0.0
     private var longitude = 0.0
     private var capturedBitmap: Bitmap? = null
@@ -55,23 +53,39 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             binding.imgPhoto.visibility = View.GONE
             checkCameraPermission()
         }
+        binding.phasorView.setRotation(45f)
+        setupConnectDeviceButton()
 
         setupPhaseButton()
         setupToolbar()
         setupUpdateButton()
-
         loadConsumerData()
 
         binding.swipeRefresh.setOnRefreshListener {
             loadConsumerData()
         }
+        binding.etphases.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val input = s.toString().trim().uppercase()
+                binding.etphases.setTextColor(when (input) {
+                    "RYB" -> Color.parseColor("#D32F2F")   // Red
+                    "RY"  -> Color.parseColor("#FFEB3B")   // Yellow
+                    "B"   -> Color.parseColor("#1976D2")
+                    "RB"   -> Color.parseColor("#1976D2")
+                    "YB"   -> Color.parseColor("#1976D2")
+                    "y"   -> Color.parseColor("#FFEB3B")  // Blue
+                    else  -> Color.BLACK                   // normal black
+                })
+            }
+        })
     }
+    private fun setupConnectDeviceButton() {
 
-
-
-    private fun setupPhaseButton() {
-
-        binding.btnPhase.setOnClickListener {
+        binding.btnPhases.setOnClickListener {
 
             val phaseInput = binding.etphases.text.toString()
                 .trim()
@@ -83,53 +97,158 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            binding.layoutSpeedometer.visibility = View.VISIBLE
-
-            binding.phasorView.animate()
-                .rotationBy(360f)
-                .setDuration(1000)
-                .start()
-
-            when (phaseInput) {
-
-                "RYB" -> binding.phasorView.setPhases(listOf("C", ))
-
-                "RY" -> binding.phasorView.setPhases(listOf("B"))
-
-                "B" -> binding.phasorView.setPhases(listOf("A"))
-
+            val mappedPhase = when (phaseInput) {
+                "RYB" -> "A"
+                "RY"  -> "B"
+                "B"   -> "C"
+                "RB" -> "C"
+                "YB"  -> "C"
+                "Y"   -> "B"
                 else -> {
-                    binding.etphases.error = "Invalid Phase "
+                    binding.etphases.error = "Invalid Phase"
                     binding.etphases.requestFocus()
                     return@setOnClickListener
                 }
             }
+
+            showPhaseDialog(mappedPhase, phaseInput)
+        }
+    }
+
+
+    private fun showPhaseDialog(mappedPhase: String, originalPhase: String) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_phase, null)
+
+        val dialogPhasorView = dialogView.findViewById<com.example.feeder.custom.PhasorView>(R.id.dialogPhasorView)
+        val tvLabel = dialogView.findViewById<android.widget.TextView>(R.id.tvDialogLabel)
+        val btnConfirm = dialogView.findViewById<android.widget.Button>(R.id.tvDialogTitle)
+        val btnExit = dialogView.findViewById<android.widget.Button>(R.id.btnExit)
+        val btnRetry = dialogView.findViewById<android.widget.Button>(R.id.btnretry)
+
+        tvLabel.visibility = View.INVISIBLE
+
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+
+        dialog.show()
+
+        // Animation start karo
+        dialogPhasorView.startFiveSecondRotation(mappedPhase)
+
+        dialogPhasorView.setOnRotationCompleteListener {
+            tvLabel.text = " $originalPhase"
+
+            tvLabel.setTextColor(when (originalPhase.uppercase()) {
+                "RYB" -> Color.parseColor("#D32F2F")   // Red for RYB (A)
+                "RY"  -> Color.parseColor("#FFEB3B")   // Yellow for RY (B)
+                "B"   -> Color.parseColor("#1976D2")   // Blue for B (C)
+                else  -> Color.BLACK                   // fallback
+            })
+
+            tvLabel.setTypeface(tvLabel.typeface, Typeface.BOLD)
+            tvLabel.textSize = 24f   // optional – thoda bada kar diya visibility ke liye
+            tvLabel.visibility = View.VISIBLE
+        }
+
+        btnConfirm.setOnClickListener {
+            dialog.dismiss()
+            binding.phaselayout.visibility = View.VISIBLE
+            binding.txtOpenCamera.visibility = View.VISIBLE
+            binding.updatePhoto.visibility = View.VISIBLE
+        }
+
+        btnExit.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnRetry.setOnClickListener {
+            dialogPhasorView.needleAngle = 90f   // right angle se restart
+            dialogPhasorView.startFiveSecondRotation(mappedPhase)
+            // text wahi rahega, color change nahi hoga
+        }
+    }
+
+
+
+    private fun setupPhaseButton() {
+        binding.btnPhase.setOnClickListener {
+
+            val phaseInput = binding.etphases.text.toString()
+                .trim()
+                .uppercase(Locale.getDefault())
+
+            if (phaseInput.isEmpty()) {
+                binding.etphases.error = "Enter Phase"
+                binding.etphases.requestFocus()
+                return@setOnClickListener
+            }
+            binding.etphases.setTextColor(when (phaseInput) {
+                "RYB" -> Color.parseColor("#D32F2F")
+                "RY"  -> Color.parseColor("#FFEB3B")
+                "B"   -> Color.parseColor("#1976D2")
+                else -> Color.BLACK
+            })
+            val mappedPhase = when (phaseInput) {
+                "RYB" -> "A"
+                "RY"  -> "B"
+                "B"   -> "C"
+                else -> {
+                    binding.etphases.error = "Invalid Phase"
+                    binding.etphases.requestFocus()
+                    return@setOnClickListener
+                }
+            }
+
+            binding.layoutSpeedometer.visibility = View.VISIBLE
+
+            binding.phasorView.startFiveSecondRotation(mappedPhase)
 
             binding.tvSpeedLabel.text = "Phase: $phaseInput"
         }
     }
 
     private fun loadConsumerData() {
+
         binding.swipeRefresh.isRefreshing = true
 
         showConsumerData()
 
-        val phase = binding.etphases.text.toString()
+        val phaseInput = binding.etphases.text.toString()
             .trim()
             .uppercase(Locale.getDefault())
 
-        when (phase) {
-            "RYB" -> binding.phasorView.setPhases(listOf("A","B","C"))
-            "RY" -> binding.phasorView.setPhases(listOf("A","B"))
-            "B" -> binding.phasorView.setPhases(listOf("C"))
+        if (phaseInput.isEmpty()) {
+            binding.swipeRefresh.isRefreshing = false
+            binding.etphases.error = "Enter Phase"
+            binding.etphases.requestFocus()
+            return
         }
 
-//        binding.phasorView.setPhaseAngle(angle)
+        binding.etphases.setTextColor(when (phaseInput) {
+            "RYB" -> Color.parseColor("#D32F2F")
+            "RY"  -> Color.parseColor("#FFEB3B")
+            "B"   -> Color.parseColor("#1976D2")
+            else  -> Color.BLACK
+        })
 
+        val mappedPhase = when (phaseInput) {
+            "RYB" -> "A"
+            "RY"  -> "B"
+            "B"   -> "C"
+            else -> {
+                binding.swipeRefresh.isRefreshing = false
+                binding.etphases.error = "Invalid Phase"
+                binding.etphases.requestFocus()
+                return
+            }
+        }
+
+        binding.phasorView.startFiveSecondRotation(mappedPhase)
 
         fetchLocation()
     }
-
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -222,7 +341,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         }
     }
 
-
     private fun showToast(message: String?) {
         Toast.makeText(this, message ?: "Something went wrong", Toast.LENGTH_SHORT).show()
     }
@@ -274,6 +392,9 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
         binding.consumerlocation.text = "Fetching location..."
         binding.swipeRefresh.isRefreshing = true
+        binding.consumerlocation.maxLines = 1
+        binding.consumerlocation.ellipsize = TextUtils.TruncateAt.END
+        binding.consumerlocation.isSingleLine = true
 
         if (!fusedLocationClient.hasLocationPermissions()) {
             fusedLocationClient.requestLocationPermissions(this)
@@ -310,7 +431,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private fun drawTextOnBitmap(original: Bitmap): Bitmap {
         val mutableBitmap = original.copy(Bitmap.Config.ARGB_8888, true)
@@ -352,37 +472,11 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         if (requestCode == PERMISSION_REQ && grantResults.isNotEmpty() &&
             grantResults.all { it == PackageManager.PERMISSION_GRANTED }
         ) {
-//            openCameraAfterLocation = true
             fetchLocation()
         } else {
             Toast.makeText(this, "Location Permission denied", Toast.LENGTH_SHORT).show()
         }
     }
-
-    private fun setupSpeedometer(phase: String) {
-
-        val upperPhase = phase.uppercase(Locale.getDefault())
-
-        val speed = when (upperPhase) {
-            "RYB" -> 3f
-            "RY" -> 2f
-            "B" -> 1f
-            else -> 0f
-        }
-
-//        binding.speedometer.apply {
-//            maxSpeed = 3f
-//            withTremble = false
-//            unit = ""
-//            speedTextColor = Color.BLACK
-//            unitTextColor = Color.BLACK
-//            speedTextSize = 22f
-//            speedTo(speed)
-//        }
-
-        binding.tvSpeedLabel.text = "Phase: $upperPhase"
-    }
-
 
 
     private fun openCameraSafely() {

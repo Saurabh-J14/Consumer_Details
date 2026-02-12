@@ -34,22 +34,22 @@ class SplashActivity : AppCompatActivity() {
         }, SPLASH_DELAY)
 
 
-        val text = "UtilityNet App"
+        val text = "PhiTech"
         val spannable = SpannableString(text)
 
         spannable.setSpan(
             ForegroundColorSpan(ContextCompat.getColor(this, R.color.red)),
             0,
-            10,
+            7,
             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
         )
 
-        spannable.setSpan(
-            ForegroundColorSpan(ContextCompat.getColor(this, R.color.black)),
-            11,
-            text.length,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-        )
+//        spannable.setSpan(
+//            ForegroundColorSpan(ContextCompat.getColor(this, R.color.black)),
+//            11,
+//            text.length,
+//            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+//        )
 
         binding.tvHeader.text = spannable
 

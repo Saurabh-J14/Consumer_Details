@@ -2,17 +2,15 @@ package com.example.feeder.ui.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
-import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.*
 import com.example.feeder.data.model.PendingConsumerResponse
 import com.example.feeder.databinding.ItemConsumerCountBinding
+import com.example.feeder.utils.PhaseUtils
 
 class PendingConsumerAdapter(
     private val onItemClick: (PendingConsumerResponse.ResData.Data) -> Unit
-) : ListAdapter<PendingConsumerResponse.ResData.Data, PendingConsumerAdapter.PendingViewHolder>(
-    DiffCallback()
-) {
+) : ListAdapter<PendingConsumerResponse.ResData.Data,
+        PendingConsumerAdapter.PendingViewHolder>(DiffCallback()) {
 
     inner class PendingViewHolder(
         private val binding: ItemConsumerCountBinding
@@ -20,9 +18,15 @@ class PendingConsumerAdapter(
 
         fun bind(item: PendingConsumerResponse.ResData.Data) {
 
-            binding.etconsumerno.text = item.consumerNumber
-            binding.etMeterNo.text = item.meterNumber
-            binding.etphase.text = item.phaseDesignation?.toString() ?: ""
+            binding.etconsumerno.text = item.consumerNumber ?: "-"
+            binding.etMeterNo.text = item.meterNumber ?: "-"
+
+            val phase = PhaseUtils.normalizePhase(item.phaseDesignation)
+
+            binding.etphase.text = phase
+            binding.etphase.setTextColor(
+                PhaseUtils.getPhaseColor(phase)
+            )
 
             binding.root.setOnClickListener {
                 onItemClick(item)
@@ -30,11 +34,7 @@ class PendingConsumerAdapter(
         }
     }
 
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): PendingViewHolder {
-
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PendingViewHolder {
         val binding = ItemConsumerCountBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
@@ -50,18 +50,12 @@ class PendingConsumerAdapter(
     class DiffCallback :
         DiffUtil.ItemCallback<PendingConsumerResponse.ResData.Data>() {
 
-        override fun areItemsTheSame(
-            oldItem: PendingConsumerResponse.ResData.Data,
-            newItem: PendingConsumerResponse.ResData.Data
-        ): Boolean {
-            return oldItem.consumerNumber == newItem.consumerNumber
-        }
+        override fun areItemsTheSame(oldItem: PendingConsumerResponse.ResData.Data,
+                                     newItem: PendingConsumerResponse.ResData.Data) =
+            oldItem.consumerNumber == newItem.consumerNumber
 
-        override fun areContentsTheSame(
-            oldItem: PendingConsumerResponse.ResData.Data,
-            newItem: PendingConsumerResponse.ResData.Data
-        ): Boolean {
-            return oldItem == newItem
-        }
+        override fun areContentsTheSame(oldItem: PendingConsumerResponse.ResData.Data,
+                                        newItem: PendingConsumerResponse.ResData.Data) =
+            oldItem == newItem
     }
 }
