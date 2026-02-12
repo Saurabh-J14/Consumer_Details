@@ -19,14 +19,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-<!--        <ImageButton-->
-<!--            android:id="@+id/imgClose"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_weight="1.80"-->
-<!--            android:backgroundTint="@android:color/transparent"-->
-<!--            android:src="@drawable/ic_back"-->
-<!--            app:tint="@color/white" />-->
+        <!--        <ImageButton-->
+        <!--            android:id="@+id/imgClose"-->
+        <!--            android:layout_width="match_parent"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:layout_weight="1.80"-->
+        <!--            android:backgroundTint="@android:color/transparent"-->
+        <!--            android:src="@drawable/ic_back"-->
+        <!--            app:tint="@color/white" />-->
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
@@ -65,6 +65,46 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="5dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginVertical="6dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="CurrentLocation"
+                        android:textStyle="bold"
+                        android:textSize="11sp"
+                        android:textColor="@color/black"/>
+
+                    <TextView
+                        android:id="@+id/consumerlocation"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="15dp"
+                        android:layout_marginEnd="15dp"
+                        android:layout_weight="2"
+                        android:background="@drawable/tv_background"
+                        android:cursorVisible="false"
+                        android:focusable="true"
+                        android:focusableInTouchMode="true"
+                        android:hint="Location"
+                        android:inputType="none"
+                        android:longClickable="true"
+                        android:padding="7dp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textIsSelectable="false"
+                        android:textSize="12sp"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:singleLine="true"/>
+
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -144,34 +184,35 @@
                         android:background="@drawable/tv_background"
                         android:hint="Voltage"
                         android:padding="5dp"
-                        android:textSize="11sp" />
+                        android:textSize="11sp"
+                        android:textColor="@color/black"/>
                 </LinearLayout>
 
-<!--                <LinearLayout-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:orientation="horizontal"-->
-<!--                    android:layout_marginVertical="4dp">-->
+                <!--                <LinearLayout-->
+                <!--                    android:layout_width="match_parent"-->
+                <!--                    android:layout_height="wrap_content"-->
+                <!--                    android:orientation="horizontal"-->
+                <!--                    android:layout_marginVertical="4dp">-->
 
-<!--                    <TextView-->
-<!--                        android:layout_width="0dp"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_weight="1"-->
-<!--                        android:text="Region"-->
-<!--                        android:textStyle="bold"-->
-<!--                        android:textSize="11sp"-->
-<!--                        android:textColor="@color/black"/>-->
+                <!--                    <TextView-->
+                <!--                        android:layout_width="0dp"-->
+                <!--                        android:layout_height="wrap_content"-->
+                <!--                        android:layout_weight="1"-->
+                <!--                        android:text="Region"-->
+                <!--                        android:textStyle="bold"-->
+                <!--                        android:textSize="11sp"-->
+                <!--                        android:textColor="@color/black"/>-->
 
-<!--                    <EditText-->
-<!--                        android:id="@+id/etregion_name"-->
-<!--                        android:layout_width="0dp"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_weight="2"-->
-<!--                        android:background="@drawable/tv_background"-->
-<!--                        android:hint="Region"-->
-<!--                        android:padding="5dp"-->
-<!--                        android:textSize="11sp"/>-->
-<!--                </LinearLayout>-->
+                <!--                    <EditText-->
+                <!--                        android:id="@+id/etregion_name"-->
+                <!--                        android:layout_width="0dp"-->
+                <!--                        android:layout_height="wrap_content"-->
+                <!--                        android:layout_weight="2"-->
+                <!--                        android:background="@drawable/tv_background"-->
+                <!--                        android:hint="Region"-->
+                <!--                        android:padding="5dp"-->
+                <!--                        android:textSize="11sp"/>-->
+                <!--                </LinearLayout>-->
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -196,6 +237,7 @@
                         android:background="@drawable/tv_background"
                         android:hint="Circle"
                         android:padding="5dp"
+                        android:textColor="@color/black"
                         android:textSize="11sp"/>
                 </LinearLayout>
 
@@ -222,6 +264,7 @@
                         android:background="@drawable/tv_background"
                         android:hint="DTC Name"
                         android:padding="5dp"
+                        android:textColor="@color/black"
                         android:textSize="11sp"/>
                 </LinearLayout>
 
@@ -275,35 +318,36 @@
                         android:background="@drawable/tv_background"
                         android:hint="ConsumerStatus"
                         android:padding="5dp"
+                        android:textColor="@color/black"
                         android:textSize="11sp"/>
                 </LinearLayout>
 
-<!--                <LinearLayout-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:orientation="horizontal"-->
-<!--                    android:layout_marginVertical="4dp">-->
+                <!--                <LinearLayout-->
+                <!--                    android:layout_width="match_parent"-->
+                <!--                    android:layout_height="wrap_content"-->
+                <!--                    android:orientation="horizontal"-->
+                <!--                    android:layout_marginVertical="4dp">-->
 
-<!--                    <TextView-->
-<!--                        android:layout_width="0dp"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_weight="1"-->
-<!--                        android:text="Zone Name"-->
-<!--                        android:textStyle="bold"-->
-<!--                        android:textColor="@color/black"-->
-<!--                        android:textSize="11sp"/>-->
+                <!--                    <TextView-->
+                <!--                        android:layout_width="0dp"-->
+                <!--                        android:layout_height="wrap_content"-->
+                <!--                        android:layout_weight="1"-->
+                <!--                        android:text="Zone Name"-->
+                <!--                        android:textStyle="bold"-->
+                <!--                        android:textColor="@color/black"-->
+                <!--                        android:textSize="11sp"/>-->
 
-<!--                    <TextView-->
-<!--                        android:id="@+id/textzone"-->
-<!--                        android:layout_width="0dp"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_weight="2"-->
-<!--                        android:background="@drawable/tv_background"-->
-<!--                        android:padding="5dp"-->
-<!--                        android:hint="Zone Name"-->
-<!--                        android:textColor="@color/black"-->
-<!--                        android:textSize="11sp"/>-->
-<!--                </LinearLayout>-->
+                <!--                    <TextView-->
+                <!--                        android:id="@+id/textzone"-->
+                <!--                        android:layout_width="0dp"-->
+                <!--                        android:layout_height="wrap_content"-->
+                <!--                        android:layout_weight="2"-->
+                <!--                        android:background="@drawable/tv_background"-->
+                <!--                        android:padding="5dp"-->
+                <!--                        android:hint="Zone Name"-->
+                <!--                        android:textColor="@color/black"-->
+                <!--                        android:textSize="11sp"/>-->
+                <!--                </LinearLayout>-->
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -464,14 +508,17 @@
                         android:background="@drawable/tv_background"
                         android:hint="Feeder ID"
                         android:padding="5dp"
+                        android:textColor="@color/black"
                         android:textSize="11sp"/>
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/phaselayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:weightSum="4">
+                    android:weightSum="4"
+                    android:visibility="gone">
 
                     <TextView
                         android:layout_width="0dp"
@@ -486,13 +533,14 @@
                         android:id="@+id/etphases"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="2"
+                        android:layout_weight="3"
                         android:background="@drawable/tv_background"
                         android:hint="Phase"
                         android:textSize="11sp"
                         android:padding="5dp"
+                        android:textColor="@color/black"
                         android:layout_marginEnd="5dp"
-                        android:layout_marginStart="40dp" />
+                        android:layout_marginStart="50dp"/>
 
                     <Button
                         android:id="@+id/btnPhase"
@@ -501,8 +549,29 @@
                         android:layout_marginStart="3dp"
                         android:layout_weight="1"
                         android:text="Check"
+                        android:visibility="gone"
                         android:textAllCaps="false"
                         android:textSize="11sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginVertical="4dp">
+
+                    <Button
+                        android:id="@+id/btnPhases"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Conect to Decive"
+                        android:textStyle="bold"
+                        android:textSize="11sp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginEnd="20dp"
+                        android:textColor="@color/white"/>
 
                 </LinearLayout>
 
@@ -561,35 +630,6 @@
 
                 </LinearLayout>
 
-
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginVertical="6dp">
-
-                    <TextView
-                        android:id="@+id/consumerlocation"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginEnd="15dp"
-                        android:layout_weight="2"
-                        android:background="@drawable/tv_background"
-                        android:cursorVisible="false"
-                        android:focusable="true"
-                        android:focusableInTouchMode="true"
-                        android:hint="Location"
-                        android:inputType="none"
-                        android:longClickable="true"
-                        android:padding="7dp"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textIsSelectable="false"
-                        android:textSize="16sp" />
-
-                </LinearLayout>
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -605,14 +645,17 @@
                         android:src="@drawable/photo_camera"
                         android:padding="15dp"
                         android:clickable="true"
-                        android:focusable="true"/>
+                        android:focusable="true"
+                        android:visibility="gone"/>
 
                     <TextView
+                        android:id="@+id/updatePhoto"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Upload Photo"
                         android:textStyle="bold"
-                        android:gravity="center"/>
+                        android:gravity="center"
+                        android:visibility="gone"/>
 
                     <ImageView
                         android:id="@+id/imgPhoto"

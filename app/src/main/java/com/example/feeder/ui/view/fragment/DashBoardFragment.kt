@@ -80,18 +80,12 @@ class DashBoardFragment : Fragment() {
     }
 
     private fun setupToolbarTitle() {
-        val titleText = "Phi-Tech"
+        val titleText = "PhiTech"
         val spannable = SpannableString(titleText)
 
         spannable.setSpan(
-            ForegroundColorSpan(Color.RED),
-            0,
-            3,
-            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-        )
-        spannable.setSpan(
             ForegroundColorSpan(Color.WHITE),
-            3,
+            7,
             titleText.length,
             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
         )
