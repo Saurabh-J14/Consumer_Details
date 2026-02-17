@@ -15,7 +15,7 @@ class PhasorView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
-    var needleAngle = 90f   // ← Sui right angle (90°) se start hogi
+    var needleAngle = 30f
         set(value) {
             field = value.coerceIn(0f, 360f)
             invalidate()
@@ -45,12 +45,11 @@ class PhasorView @JvmOverloads constructor(
         alpha = 175
     }
 
-    private val needlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    // 🔥 Arrow Paint
+    private val arrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
-        strokeWidth = 12f
-        style = Paint.Style.STROKE
-        strokeCap = Paint.Cap.ROUND
-        setShadowLayer(7f, 3f, 3f, Color.argb(160, 0, 0, 0))
+        style = Paint.Style.FILL
+        setShadowLayer(8f, 3f, 3f, Color.argb(150, 0, 0, 0))
     }
 
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -71,7 +70,6 @@ class PhasorView @JvmOverloads constructor(
         "C" to Color.parseColor("#1976D2")
     )
 
-    // To make 0° appear at the top (12 o'clock position)
     private val angleOffset = -90.0
 
     fun setOnRotationCompleteListener(listener: () -> Unit) {
@@ -83,14 +81,13 @@ class PhasorView @JvmOverloads constructor(
             "A" -> 0f
             "B" -> 120f
             "C" -> 240f
-            else -> 90f   // default right angle pe
+            else -> 30f
         }
 
         ValueAnimator.ofFloat(needleAngle, targetAngle).apply {
             duration = 5000L
             addUpdateListener { anim ->
                 needleAngle = anim.animatedValue as Float
-                invalidate()
             }
             doOnEnd { onRotationComplete?.invoke() }
             start()
@@ -99,14 +96,16 @@ class PhasorView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+
         val cx = width / 2f
         val cy = height / 2f
         val radius = min(width, height) * 0.375f
-
         val oval = RectF(cx - radius, cy - radius, cx + radius, cy + radius)
 
+        // Outer Circle
         canvas.drawCircle(cx, cy, radius, borderPaint)
 
+        // Phase Sectors
         sectorPaint.color = phaseColors["A"]!!
         canvas.drawArc(oval, 330f + angleOffset.toFloat(), 60f, true, sectorPaint)
 
@@ -116,20 +115,21 @@ class PhasorView @JvmOverloads constructor(
         sectorPaint.color = phaseColors["C"]!!
         canvas.drawArc(oval, 210f + angleOffset.toFloat(), 60f, true, sectorPaint)
 
+        // Gray fan
         val adjustedNeedleAngle = needleAngle + angleOffset.toFloat()
         canvas.drawArc(oval, adjustedNeedleAngle - 60f, 120f, true, grayFanPaint)
 
+        // Degree lines
         for (deg in 0 until 360 step 30) {
             val adjustedDeg = deg + angleOffset.toFloat()
             val rad = Math.toRadians(adjustedDeg.toDouble())
+
             val endX = cx + radius * cos(rad).toFloat()
             val endY = cy + radius * sin(rad).toFloat()
 
-            if (deg % 90 == 0) {
-                radialLinePaint.strokeWidth = 3.2f
-            } else {
-                radialLinePaint.strokeWidth = 2.2f
-            }
+            radialLinePaint.strokeWidth =
+                if (deg % 90 == 0) 3.5f else 2f
+
             canvas.drawLine(cx, cy, endX, endY, radialLinePaint)
 
             val textX = cx + (radius + 34f) * cos(rad).toFloat()
@@ -137,20 +137,82 @@ class PhasorView @JvmOverloads constructor(
             canvas.drawText(deg.toString(), textX, textY, degreeTextPaint)
         }
 
-        drawPhaseLabel(canvas, cx, cy, radius * 0.56f, (0f + angleOffset).toFloat(),   "A", Color.WHITE)
-        drawPhaseLabel(canvas, cx, cy, radius * 0.71f, (120f + angleOffset).toFloat(), "B", Color.WHITE)
-        drawPhaseLabel(canvas, cx, cy, radius * 0.56f, (240f + angleOffset).toFloat(), "C", Color.WHITE)
+        // Phase Labels
+        drawPhaseLabel(canvas, cx, cy, radius * 0.56f, (0f + angleOffset).toFloat(), "A")
+        drawPhaseLabel(canvas, cx, cy, radius * 0.71f, (120f + angleOffset).toFloat(), "B")
+        drawPhaseLabel(canvas, cx, cy, radius * 0.56f, (240f + angleOffset).toFloat(), "C")
 
-        val rad = Math.toRadians(needleAngle + angleOffset)
-        val tipX = cx + radius * 0.85f * cos(rad).toFloat()
-        val tipY = cy + radius * 0.85f * sin(rad).toFloat()
-        canvas.drawLine(cx, cy, tipX, tipY, needlePaint)
+        // 🔥 Draw Arrow (Image jaisa)
+        drawArrow(canvas, cx, cy, radius * 0.85f)
 
-        canvas.drawCircle(cx, cy, 12f, Paint().apply {
+        // Center circle
+        canvas.drawCircle(cx, cy, 14f, Paint().apply {
             color = Color.BLACK
             style = Paint.Style.FILL
         })
     }
+
+    // 🔥 Flat Body + Triangle Head Arrow
+    private fun drawArrow(canvas: Canvas, cx: Float, cy: Float, length: Float) {
+
+        val rad = Math.toRadians(needleAngle + angleOffset)
+
+        // 🔽 Size Reduced Here
+        val bodyLength = length * 0.55f     // pehle 0.65f tha
+        val headLength = length * 0.25f     // pehle 0.35f tha
+        val bodyWidth = 18f                 // pehle 28f tha
+        val headWidth = 45f                 // pehle 70f tha
+
+        val cosA = cos(rad).toFloat()
+        val sinA = sin(rad).toFloat()
+
+        val bodyEndX = cx + bodyLength * cosA
+        val bodyEndY = cy + bodyLength * sinA
+
+        val tipX = cx + (bodyLength + headLength) * cosA
+        val tipY = cy + (bodyLength + headLength) * sinA
+
+        val perpCos = cos(rad + Math.PI / 2).toFloat()
+        val perpSin = sin(rad + Math.PI / 2).toFloat()
+
+        val path = Path().apply {
+
+            moveTo(
+                cx + bodyWidth / 2 * perpCos,
+                cy + bodyWidth / 2 * perpSin
+            )
+            lineTo(
+                cx - bodyWidth / 2 * perpCos,
+                cy - bodyWidth / 2 * perpSin
+            )
+            lineTo(
+                bodyEndX - bodyWidth / 2 * perpCos,
+                bodyEndY - bodyWidth / 2 * perpSin
+            )
+
+            lineTo(
+                bodyEndX - headWidth / 2 * perpCos,
+                bodyEndY - headWidth / 2 * perpSin
+            )
+
+            lineTo(tipX, tipY)
+
+            lineTo(
+                bodyEndX + headWidth / 2 * perpCos,
+                bodyEndY + headWidth / 2 * perpSin
+            )
+
+            lineTo(
+                bodyEndX + bodyWidth / 2 * perpCos,
+                bodyEndY + bodyWidth / 2 * perpSin
+            )
+
+            close()
+        }
+
+        canvas.drawPath(path, arrowPaint)
+    }
+
 
     private fun drawPhaseLabel(
         canvas: Canvas,
@@ -158,18 +220,20 @@ class PhasorView @JvmOverloads constructor(
         cy: Float,
         r: Float,
         deg: Float,
-        label: String,
-        color: Int
+        label: String
     ) {
         val rad = Math.toRadians(deg.toDouble())
         val x = cx + r * cos(rad).toFloat()
         val y = cy + r * sin(rad).toFloat() + 20f
-        textPaint.color = color
+        textPaint.color = Color.WHITE
         canvas.drawText(label, x, y, textPaint)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val dim = min(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec))
+        val dim = min(
+            MeasureSpec.getSize(widthMeasureSpec),
+            MeasureSpec.getSize(heightMeasureSpec)
+        )
         setMeasuredDimension(dim, dim)
     }
 }

@@ -3,13 +3,20 @@ package com.example.feeder.ui
 import ConsumerUpdateBody
 import ConsumerUpdateRepository
 import android.Manifest
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothSocket
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.*
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.TextUtils
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -22,6 +29,7 @@ import com.example.feeder.ui.base.ConsumerUpdateViewModelFactory
 import com.example.feeder.ui.viewModel.ConsumerUpdateViewModel
 import com.example.feeder.utils.FusedLocationTracker
 import com.example.feeder.utils.PrefManager
+import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -37,6 +45,15 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private var capturedBitmap: Bitmap? = null
     private var openCameraAfterLocation = false
     private lateinit var fusedLocationClient: FusedLocationTracker
+
+    private var bluetoothAdapter: BluetoothAdapter? = null
+    private val deviceList = mutableListOf<BluetoothDevice>()
+    private lateinit var deviceAdapter: ArrayAdapter<String>
+    private var bluetoothSocket: BluetoothSocket? = null
+    private var inputStream: InputStream? = null
+
+    private val sppUUID: UUID =
+        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 
     private val viewModel: ConsumerUpdateViewModel by viewModels {
         ConsumerUpdateViewModelFactory(ConsumerUpdateRepository(RetrofitClient.getServices()))
@@ -60,6 +77,8 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         setupToolbar()
         setupUpdateButton()
         loadConsumerData()
+        setupBluetooth()
+
 
         binding.swipeRefresh.setOnRefreshListener {
             loadConsumerData()
@@ -72,17 +91,174 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             override fun afterTextChanged(s: android.text.Editable?) {
                 val input = s.toString().trim().uppercase()
                 binding.etphases.setTextColor(when (input) {
-                    "RYB" -> Color.parseColor("#D32F2F")   // Red
-                    "RY"  -> Color.parseColor("#FFEB3B")   // Yellow
+                    "RYB" -> Color.parseColor("#D32F2F")
+                    "RY"  -> Color.parseColor("#FFEB3B")
                     "B"   -> Color.parseColor("#1976D2")
                     "RB"   -> Color.parseColor("#1976D2")
                     "YB"   -> Color.parseColor("#1976D2")
-                    "y"   -> Color.parseColor("#FFEB3B")  // Blue
-                    else  -> Color.BLACK                   // normal black
+                    "y"   -> Color.parseColor("#FFEB3B")
+                    else  -> Color.BLACK
                 })
             }
         })
     }
+    private fun setupBluetooth() {
+
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+
+        deviceAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_list_item_1,
+            mutableListOf()
+        )
+
+        binding.listDevices.adapter = deviceAdapter
+
+        binding.btnBluetooth.setOnClickListener {
+
+            if (bluetoothAdapter == null) {
+                Toast.makeText(this, "Bluetooth not supported", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Bluetooth ON
+            if (!bluetoothAdapter!!.isEnabled) {
+                val enableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                startActivityForResult(enableIntent, 111)
+            } else {
+                startDiscovery()
+            }
+        }
+
+        binding.listDevices.setOnItemClickListener { _, _, position, _ ->
+            val device = deviceList[position]
+            pairAndConnect(device)
+        }
+    }
+    private fun startDiscovery() {
+
+        deviceList.clear()
+        deviceAdapter.clear()
+        binding.listDevices.visibility = View.VISIBLE
+        binding.tvStatus.text = "Scanning..."
+
+        bluetoothAdapter?.cancelDiscovery()
+        bluetoothAdapter?.startDiscovery()
+    }
+    private val bluetoothReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+
+            when (intent?.action) {
+
+                BluetoothDevice.ACTION_FOUND -> {
+
+                    val device: BluetoothDevice? =
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+
+                    device?.let {
+
+                        if (!deviceList.contains(it)) {
+
+                            deviceList.add(it)
+
+                            deviceAdapter.add(
+                                "${it.name ?: "Unknown"}\n${it.address}"
+                            )
+
+                            deviceAdapter.notifyDataSetChanged()
+                        }
+                    }
+                }
+
+                BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
+                    binding.tvStatus.text = "Select Device"
+                }
+            }
+        }
+    }
+    private fun pairAndConnect(device: BluetoothDevice) {
+
+        if (device.bondState != BluetoothDevice.BOND_BONDED) {
+
+            binding.tvStatus.text = "Pairing..."
+
+            device.createBond()
+        }
+
+        connectToDevice(device)
+    }
+    private fun connectToDevice(device: BluetoothDevice) {
+
+        binding.tvStatus.text = "Connecting..."
+
+        Thread {
+            try {
+
+                bluetoothAdapter?.cancelDiscovery()
+
+                bluetoothSocket =
+                    device.createRfcommSocketToServiceRecord(sppUUID)
+
+                bluetoothSocket?.connect()
+
+                inputStream = bluetoothSocket?.inputStream
+
+                runOnUiThread {
+                    binding.tvStatus.text =
+                        "Connected: ${device.name}"
+                    binding.listDevices.visibility = View.GONE
+                }
+
+                receiveData()
+
+            } catch (e: Exception) {
+
+                runOnUiThread {
+                    binding.tvStatus.text = "Connection Failed"
+                }
+            }
+        }.start()
+    }
+    private fun receiveData() {
+
+        Thread {
+            val buffer = ByteArray(1024)
+
+            while (true) {
+                try {
+
+                    val bytes =
+                        inputStream?.read(buffer) ?: break
+
+                    val received =
+                        String(buffer, 0, bytes)
+
+                    runOnUiThread {
+                        binding.tvData.text =
+                            "Received Data: $received"
+                    }
+
+                } catch (e: Exception) {
+                    break
+                }
+            }
+        }.start()
+    }
+    override fun onResume() {
+        super.onResume()
+
+        val filter = IntentFilter()
+        filter.addAction(BluetoothDevice.ACTION_FOUND)
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+
+        registerReceiver(bluetoothReceiver, filter)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(bluetoothReceiver)
+    }
+
     private fun setupConnectDeviceButton() {
 
         binding.btnPhases.setOnClickListener {
@@ -115,7 +291,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         }
     }
 
-
     private fun showPhaseDialog(mappedPhase: String, originalPhase: String) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_phase, null)
 
@@ -134,21 +309,28 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
         dialog.show()
 
-        // Animation start karo
         dialogPhasorView.startFiveSecondRotation(mappedPhase)
 
         dialogPhasorView.setOnRotationCompleteListener {
             tvLabel.text = " $originalPhase"
 
-            tvLabel.setTextColor(when (originalPhase.uppercase()) {
-                "RYB" -> Color.parseColor("#D32F2F")   // Red for RYB (A)
-                "RY"  -> Color.parseColor("#FFEB3B")   // Yellow for RY (B)
-                "B"   -> Color.parseColor("#1976D2")   // Blue for B (C)
-                else  -> Color.BLACK                   // fallback
-            })
+            tvLabel.setTextColor(
+                when (originalPhase.uppercase()) {
+
+                    "RYB" -> Color.parseColor("#D32F2F")   // Red
+                    "RY"  -> Color.parseColor("#FFEB3B")   // Yellow
+                    "Y"   -> Color.parseColor("#FFEB3B")   // Yellow
+                    "B"   -> Color.parseColor("#1976D2")   // Blue
+                    "RB"  -> Color.parseColor("#1976D2")   // Blue
+                    "YB"  -> Color.parseColor("#1976D2")   // Blue
+
+                    else  -> Color.BLACK
+                }
+            )
+
 
             tvLabel.setTypeface(tvLabel.typeface, Typeface.BOLD)
-            tvLabel.textSize = 24f   // optional – thoda bada kar diya visibility ke liye
+            tvLabel.textSize = 24f
             tvLabel.visibility = View.VISIBLE
         }
 
@@ -164,12 +346,10 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         }
 
         btnRetry.setOnClickListener {
-            dialogPhasorView.needleAngle = 90f   // right angle se restart
+            dialogPhasorView.needleAngle = 90f
             dialogPhasorView.startFiveSecondRotation(mappedPhase)
-            // text wahi rahega, color change nahi hoga
         }
     }
-
 
 
     private fun setupPhaseButton() {
@@ -188,12 +368,18 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 "RYB" -> Color.parseColor("#D32F2F")
                 "RY"  -> Color.parseColor("#FFEB3B")
                 "B"   -> Color.parseColor("#1976D2")
+                "RB"   -> Color.parseColor("#1976D2")
+                "YB"   -> Color.parseColor("#1976D2")
+                "y"   -> Color.parseColor("#FFEB3B")
                 else -> Color.BLACK
             })
             val mappedPhase = when (phaseInput) {
                 "RYB" -> "A"
                 "RY"  -> "B"
                 "B"   -> "C"
+                "RB" -> "C"
+                "YB"  -> "C"
+                "Y"   -> "B"
                 else -> {
                     binding.etphases.error = "Invalid Phase"
                     binding.etphases.requestFocus()
@@ -230,6 +416,9 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             "RYB" -> Color.parseColor("#D32F2F")
             "RY"  -> Color.parseColor("#FFEB3B")
             "B"   -> Color.parseColor("#1976D2")
+            "RB"   -> Color.parseColor("#1976D2")
+            "YB"   -> Color.parseColor("#1976D2")
+            "y"   -> Color.parseColor("#FFEB3B")
             else  -> Color.BLACK
         })
 
@@ -237,6 +426,9 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             "RYB" -> "A"
             "RY"  -> "B"
             "B"   -> "C"
+            "RB" ->  "C"
+            "YB"  -> "C"
+            "Y"   -> "B"
             else -> {
                 binding.swipeRefresh.isRefreshing = false
                 binding.etphases.error = "Invalid Phase"
@@ -288,7 +480,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                     return@setOnClickListener
                 }
 
-                "RYB", "RY", "B" -> {
+                "RYB", "RY", "B","RB","YB","Y" -> {
                 }
 
                 else -> {
@@ -299,6 +491,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             }
 
             val body = ConsumerUpdateBody(
+                ConsumerNumber = binding.etconsumerno.text.toString(),
                 MeterNumber = binding.etMeterNo.text.toString(),
                 FeederId = binding.etfeedr.text.toString(),
                 Feeder_Name = binding.txtFeedername.text.toString(),
@@ -432,7 +625,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         }
     }
 
-    private fun drawTextOnBitmap(original: Bitmap): Bitmap {
+    private fun drawTextOnBitmap(original: Bitmap): Bitmap  {
         val mutableBitmap = original.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(mutableBitmap)
 

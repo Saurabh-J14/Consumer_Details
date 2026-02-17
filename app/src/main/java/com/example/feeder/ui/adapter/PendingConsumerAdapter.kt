@@ -24,9 +24,9 @@ class PendingConsumerAdapter(
             val phase = PhaseUtils.normalizePhase(item.phaseDesignation)
 
             binding.etphase.text = phase
-            binding.etphase.setTextColor(
-                PhaseUtils.getPhaseColor(phase)
-            )
+//            binding.etphase.setTextColor(
+//                PhaseUtils.getPhaseColor(phase)
+//            )
 
             binding.root.setOnClickListener {
                 onItemClick(item)
