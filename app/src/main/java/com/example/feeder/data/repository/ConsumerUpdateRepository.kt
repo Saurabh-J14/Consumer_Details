@@ -20,7 +20,7 @@ class ConsumerUpdateRepository(
 
         return api.updateConsumer(
             token = token,
-//            ConsumerNumber = body.ConsumerNumber.toPart(),
+           consumerNumber = body.ConsumerNumber,
             MeterNumber = body.MeterNumber.toPart(),
             FeederId = body.FeederId.toPart(),
             Feeder_Name = body.Feeder_Name.toPart(),

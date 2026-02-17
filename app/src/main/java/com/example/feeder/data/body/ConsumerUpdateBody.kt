@@ -1,5 +1,5 @@
 data class ConsumerUpdateBody(
-//    val ConsumerNumber: String,
+    val ConsumerNumber: String,
     val MeterNumber: String,
     val FeederId: String,
     val Feeder_Name: String,

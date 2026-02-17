@@ -90,15 +90,33 @@
         </LinearLayout>
     </com.facebook.shimmer.ShimmerFrameLayout>
 
+    <!--      <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/btnstart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="14dp"
+            android:layout_marginBottom="45dp"
+            android:backgroundTint="@color/blue_dark"
+            android:gravity="center"
+
+            android:nestedScrollingEnabled="false"
+            android:text="@string/start"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />-->
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/headerView">
+        app:layout_constraintTop_toBottomOf="@id/headerView"
+        app:layout_constraintVertical_bias="0.0">
 
         <ScrollView
             android:layout_width="match_parent"
@@ -120,53 +138,51 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-<!--                    <LinearLayout-->
-<!--                        android:layout_width="match_parent"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_marginStart="8dp"-->
-<!--                        android:orientation="vertical"-->
-<!--                        android:paddingBottom="20dp">-->
+                    <!--                    <LinearLayout-->
+                    <!--                        android:layout_width="match_parent"-->
+                    <!--                        android:layout_height="wrap_content"-->
+                    <!--                        android:layout_marginStart="8dp"-->
+                    <!--                        android:orientation="vertical"-->
+                    <!--                        android:paddingBottom="20dp">-->
 
-<!--                        <TextView-->
-<!--                            android:layout_width="match_parent"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:text="@string/consumer_details"-->
-<!--                            android:textColor="@color/black"-->
-<!--                            android:textSize="15sp"-->
-<!--                            android:textStyle="bold" />-->
+                    <!--                        <TextView-->
+                    <!--                            android:layout_width="match_parent"-->
+                    <!--                            android:layout_height="wrap_content"-->
+                    <!--                            android:text="@string/consumer_details"-->
+                    <!--                            android:textColor="@color/black"-->
+                    <!--                            android:textSize="15sp"-->
+                    <!--                            android:textStyle="bold" />-->
 
-<!--                    </LinearLayout>-->
+                    <!--                    </LinearLayout>-->
 
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="40dp"
                         android:gravity="center"
                         android:orientation="horizontal"
-                        android:layout_marginTop="40dp"
                         android:padding="1dp"
                         android:weightSum="3">
-
-
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center">
+                            android:gravity="center"
+                            android:orientation="vertical">
 
-                            <!-- CardView -->
                             <androidx.cardview.widget.CardView
                                 android:id="@+id/consumerUpdate"
                                 android:layout_width="110dp"
                                 android:layout_height="110dp"
                                 android:layout_margin="6dp"
-                                android:background="@drawable/countpending"
                                 app:cardCornerRadius="60dp"
+                                android:background="@drawable/card_border"
                                 app:cardElevation="8dp">
 
                                 <LinearLayout
+                                    android:id="@+id/complete"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:background="@drawable/card_border"
@@ -185,7 +201,6 @@
 
                             </androidx.cardview.widget.CardView>
 
-                            <!-- Text BELOW CardView -->
                             <TextView
                                 android:id="@+id/total"
                                 android:layout_width="wrap_content"
@@ -202,23 +217,24 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center">
+                            android:gravity="center"
+                            android:orientation="vertical">
 
-                            <!-- CardView -->
                             <androidx.cardview.widget.CardView
                                 android:id="@+id/totalCounts"
                                 android:layout_width="110dp"
                                 android:layout_height="110dp"
                                 android:layout_margin="6dp"
+                                android:background="@drawable/card_border"
                                 app:cardCornerRadius="60dp"
                                 app:cardElevation="8dp">
 
                                 <LinearLayout
+                                    android:id="@+id/totalcom"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
-                                    android:gravity="center"
                                     android:background="@drawable/card_border"
+                                    android:gravity="center"
                                     android:orientation="vertical">
 
                                     <TextView
@@ -228,6 +244,7 @@
                                         android:text=""
                                         android:textSize="16sp"
                                         android:textStyle="bold" />
+
                                 </LinearLayout>
 
                             </androidx.cardview.widget.CardView>
@@ -236,11 +253,11 @@
                                 android:id="@+id/totalscount"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
                                 android:text="@string/total_complete"
                                 android:textColor="@color/black"
                                 android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:layout_marginTop="4dp"/>
+                                android:textStyle="bold" />
 
                         </LinearLayout>
 
@@ -248,22 +265,21 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center">
+                            android:gravity="center"
+                            android:orientation="vertical">
 
                             <androidx.cardview.widget.CardView
                                 android:id="@+id/totalPending"
                                 android:layout_width="110dp"
                                 android:layout_height="110dp"
                                 android:layout_margin="6dp"
-                                android:background="@drawable/countpending"
-                                app:cardBackgroundColor="@color/card_bg"
+                                android:background="@drawable/card_border"
                                 app:cardCornerRadius="60dp"
                                 app:cardElevation="8dp"
-                                app:strokeColor="@color/card_border"
                                 app:strokeWidth="2dp">
 
                                 <LinearLayout
+                                    android:id="@+id/pending2"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:background="@drawable/card_border"
@@ -294,27 +310,34 @@
 
                         </LinearLayout>
 
-
                     </LinearLayout>
 
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvConsumerList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:background="@drawable/btn_rounded"
+                        android:visibility="gone" />
 
-<!--                    <ImageButton-->
-<!--                        android:id="@+id/btnDashboard"-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_gravity="end"-->
-<!--                        android:layout_marginTop="400dp"-->
-<!--                        android:layout_marginEnd="40dp"-->
-<!--                        android:background="@android:color/transparent"-->
-<!--                        android:backgroundTint="@color/blue"-->
-<!--                        android:contentDescription="@string/app_name"-->
-<!--                        android:src="@drawable/dashboard_consumer"-->
-<!--                        android:tint="@color/blue" />-->
+
+                    <!--                    <ImageButton-->
+                    <!--                        android:id="@+id/btnDashboard"-->
+                    <!--                        android:layout_width="wrap_content"-->
+                    <!--                        android:layout_height="wrap_content"-->
+                    <!--                        android:layout_gravity="end"-->
+                    <!--                        android:layout_marginTop="400dp"-->
+                    <!--                        android:layout_marginEnd="40dp"-->
+                    <!--                        android:background="@android:color/transparent"-->
+                    <!--                        android:backgroundTint="@color/blue"-->
+                    <!--                        android:contentDescription="@string/app_name"-->
+                    <!--                        android:src="@drawable/dashboard_consumer"-->
+                    <!--                        android:tint="@color/blue" />-->
 
                 </LinearLayout>
 
 
-               <!-- <LinearLayout
+                <!-- <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
@@ -371,30 +394,10 @@
             </LinearLayout>
 
 
-
-
         </ScrollView>
 
 
-
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
-  <!--      <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-            android:id="@+id/btnstart"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="14dp"
-            android:layout_marginBottom="45dp"
-            android:backgroundTint="@color/blue_dark"
-            android:gravity="center"
-
-            android:nestedScrollingEnabled="false"
-            android:text="@string/start"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />-->
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnAdd"

@@ -79,11 +79,11 @@ suspend fun loginUser(
 
 
     @Multipart
-    @PUT("api/Consumer/EditConsumerDetails?ConsumerNumber=32510017010")
+    @PUT("api/Consumer/EditConsumerDetails?")
 //    @FormUrlEncoded
     suspend fun updateConsumer(
         @Header("Authorization") token: String,
-//        @Part("ConsumerNumber") ConsumerNumber: RequestBody,
+        @Query("ConsumerNumber") consumerNumber: String,
         @Part("MeterNumber") MeterNumber: RequestBody,
         @Part("FeederId") FeederId: RequestBody,
         @Part("Feeder_Name") Feeder_Name: RequestBody,

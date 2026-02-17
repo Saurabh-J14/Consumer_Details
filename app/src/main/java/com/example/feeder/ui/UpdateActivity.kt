@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.feeder.data.model.ConsumerUpdateResponse
+import com.example.feeder.data.model.InnerData
 import com.example.feeder.data.model.UpdateResponse
 import com.example.feeder.databinding.ActivityUpdateBinding
 import com.google.gson.Gson
@@ -41,8 +42,9 @@ class UpdateActivity : AppCompatActivity() {
 
         val data = Gson().fromJson(
             json,
-            ConsumerUpdateResponse.ResData::class.java
+            InnerData::class.java
         )
+
 
         binding.etconsumerno.text = data.resData.consumerNumber
         binding.etMeterNo.text = data.resData.meterNumber

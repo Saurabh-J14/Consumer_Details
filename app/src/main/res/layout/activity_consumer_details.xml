@@ -566,14 +566,58 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Conect to Decive"
+                        android:text="Connect to Decive"
                         android:textStyle="bold"
-                        android:textSize="11sp"
+                        android:textSize="14sp"
+                        android:textAllCaps="false"
                         android:layout_marginStart="20dp"
                         android:layout_marginEnd="20dp"
                         android:textColor="@color/white"/>
 
                 </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <Button
+                            android:id="@+id/btnBluetooth"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginEnd="20dp"
+                            android:text="Connect Bluetooth"
+                            android:textSize="14sp"
+                            android:textAllCaps="false" />
+
+                        <ListView
+                            android:id="@+id/listDevices"
+                            android:layout_width="match_parent"
+                            android:layout_height="200dp"
+                            android:visibility="gone"/>
+
+                        <TextView
+                            android:id="@+id/tvStatus"
+                            android:layout_marginTop="20dp"
+                            android:text="Status: Not Connected"
+                            android:textSize="16sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                        <TextView
+                            android:id="@+id/tvData"
+                            android:layout_marginTop="20dp"
+                            android:text="Received Data:"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+
+
 
 
                 <!-- <LinearLayout
