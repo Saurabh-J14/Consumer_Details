@@ -108,13 +108,14 @@
                     android:textSize="11sp"
                     android:textColor="@color/black"/>
 
-                <EditText
+                <TextView
                     android:id="@+id/etvoltage"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
                     android:background="@drawable/tv_background"
                     android:hint="Voltage"
+                    android:textColor="@color/black"
                     android:padding="5dp"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -186,13 +187,14 @@
                     android:textSize="11sp"
                     android:textColor="@color/black"/>
 
-                <EditText
+                <TextView
                     android:id="@+id/etdtc_name"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
                     android:background="@drawable/tv_background"
                     android:hint="DTC Name"
+                    android:textColor="@color/black"
                     android:padding="5dp"
                     android:textSize="11sp"/>
             </LinearLayout>
@@ -211,7 +213,7 @@
                     android:textSize="11sp"
                     android:textColor="@color/black"/>
 
-                <EditText
+                <TextView
                     android:id="@+id/etdtc_code"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -219,6 +221,7 @@
                     android:background="@drawable/tv_background"
                     android:hint="DTC Code"
                     android:padding="5dp"
+                    android:textColor="@color/black"
                     android:textSize="11sp"/>
             </LinearLayout>
 
@@ -237,7 +240,7 @@
                     android:textSize="11sp"
                     android:textColor="@color/black"/>
 
-                <EditText
+                <TextView
                     android:id="@+id/etsanctionedload"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -245,6 +248,7 @@
                     android:background="@drawable/tv_background"
                     android:hint="SanctionedLoad"
                     android:padding="5dp"
+                    android:textColor="@color/black"
                     android:textSize="11sp"/>
             </LinearLayout>
 
@@ -263,7 +267,7 @@
                     android:textSize="11sp"
                     android:textColor="@color/black"/>
 
-                <EditText
+                <TextView
                     android:id="@+id/etregion_name"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -271,6 +275,7 @@
                     android:background="@drawable/tv_background"
                     android:hint="Region Name"
                     android:padding="5dp"
+                    android:textColor="@color/black"
                     android:textSize="11sp"/>
             </LinearLayout>
 
@@ -451,7 +456,7 @@
                     android:textSize="11sp"
                     android:textColor="@color/black"/>
 
-                <EditText
+                <TextView
                     android:id="@+id/etfeedr"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -459,6 +464,7 @@
                     android:background="@drawable/tv_background"
                     android:hint="Feeder ID"
                     android:padding="5dp"
+                    android:textColor="@color/black"
                     android:textSize="11sp"/>
             </LinearLayout>
 
@@ -531,7 +537,7 @@
                     android:textColor="@color/black"
                     android:textSize="11sp"/>
 
-                <EditText
+                <TextView
                     android:id="@+id/etphase"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"

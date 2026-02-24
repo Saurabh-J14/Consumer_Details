@@ -88,6 +88,9 @@ class DashBoardFragment : Fragment() {
         setupToolbarTitle()
         setupRecyclerView()
         observeData()
+        showAllCardBorders()
+        showShimmer()
+
         val token = prefManager.getAccessToken() ?: return
         binding.rvConsumerList.visibility = View.VISIBLE
         totalConsumerViewModel.getTotalConsumer("Bearer $token")
@@ -125,6 +128,18 @@ class DashBoardFragment : Fragment() {
 
 
     }
+    private fun showShimmer() {
+        binding.shimmerViewContainer.visibility = View.VISIBLE
+        binding.shimmerViewContainer.startShimmer()
+        binding.dashBoardLayout.visibility = View.GONE
+        binding.rvConsumerList.visibility = View.GONE
+    }
+
+    private fun hideShimmer() {
+        binding.shimmerViewContainer.stopShimmer()
+        binding.shimmerViewContainer.visibility = View.GONE
+        binding.dashBoardLayout.visibility = View.VISIBLE
+    }
 
     private fun setupRecyclerView() {
         binding.rvConsumerList.layoutManager =
@@ -137,10 +152,15 @@ class DashBoardFragment : Fragment() {
             totalConsumerViewModel.consumerResult.collect { status ->
 
                 when (status) {
+                    is RequestStatus.Waiting -> {
+                        showShimmer()
+                    }
 
                     is RequestStatus.Success -> {
+                        hideShimmer()
 
                         val list = status.data.resData.data
+                        binding.rvConsumerList.visibility = View.VISIBLE
 
                         binding.rvConsumerList.adapter =
                             TotalConsumerAdapter(list) { selectedItem ->
@@ -151,6 +171,7 @@ class DashBoardFragment : Fragment() {
                     }
 
                     is RequestStatus.Error -> {
+                        hideShimmer()
                         Toast.makeText(
                             requireContext(),
                             "Something went wrong",
@@ -168,12 +189,17 @@ class DashBoardFragment : Fragment() {
             viewModel.countResult.collect { status ->
 
                 when (status) {
+                    is RequestStatus.Waiting -> {
+                        showShimmer()
+                    }
 
                     is RequestStatus.Success -> {
-
+                        hideShimmer()
                         val resData = status.data?.resData
 
                         if (resData != null) {
+                            binding.rvConsumerList.visibility = View.VISIBLE
+
 
                             binding.rvConsumerList.adapter =
                                 ConsumerCountAdapter(resData.data) { selectedItem ->
@@ -185,11 +211,12 @@ class DashBoardFragment : Fragment() {
                     }
 
                     is RequestStatus.Error -> {
+                        hideShimmer()
                         binding.rvConsumerList.visibility = View.GONE
                     }
-
-                    else -> {}
                 }
+
+
             }
         }
 
@@ -200,13 +227,17 @@ class DashBoardFragment : Fragment() {
                 when (status) {
 
                     is RequestStatus.Waiting -> {
+                        showShimmer()
+
                         binding.pendingCount.text = "..."
                         binding.rvConsumerList.visibility = View.GONE
                     }
 
                     is RequestStatus.Success -> {
+                        hideShimmer()
 
                         val resData = status.data.resData
+                        binding.rvConsumerList.visibility = View.VISIBLE
                         binding.pendingCount.text = resData.totalCount.toString()
 
                         binding.rvConsumerList.visibility = View.VISIBLE
@@ -247,6 +278,7 @@ class DashBoardFragment : Fragment() {
                     }
 
                     is RequestStatus.Error -> {
+                        hideShimmer()
                         binding.pendingCount.text = "0"
                         binding.rvConsumerList.visibility = View.GONE
                         Toast.makeText(
@@ -263,41 +295,53 @@ class DashBoardFragment : Fragment() {
     private fun highlightCard(type: String) {
 
         val green = ContextCompat.getColor(requireContext(), R.color.greens)
-        val red = ContextCompat.getColor(requireContext(), R.color.red)
         val white = ContextCompat.getColor(requireContext(), R.color.white)
 
+        showAllCardBorders()
+
         binding.consumerUpdate.setCardBackgroundColor(white)
-        binding.complete.setBackgroundColor(white)
-
         binding.totalCounts.setCardBackgroundColor(white)
-        binding.totalcom.setBackgroundColor(white)
-
         binding.totalPending.setCardBackgroundColor(white)
+
+        binding.complete.setBackgroundColor(white)
+        binding.totalcom.setBackgroundColor(white)
         binding.pending2.setBackgroundColor(white)
 
         when (type) {
 
             "UPDATE" -> {
+                binding.consumerUpdate.strokeWidth = 6
                 binding.consumerUpdate.setCardBackgroundColor(green)
                 binding.complete.setBackgroundColor(green)
             }
 
             "COUNT" -> {
+                binding.totalCounts.strokeWidth = 6
                 binding.totalCounts.setCardBackgroundColor(green)
                 binding.totalcom.setBackgroundColor(green)
             }
 
             "PENDING" -> {
+                binding.totalPending.strokeWidth = 6
                 binding.totalPending.setCardBackgroundColor(green)
                 binding.pending2.setBackgroundColor(green)
             }
         }
     }
 
+    private fun showAllCardBorders() {
 
+        val red = ContextCompat.getColor(requireContext(), R.color.card_bg)
 
+        binding.consumerUpdate.strokeColor = red
+        binding.consumerUpdate.strokeWidth = 4
 
+        binding.totalCounts.strokeColor = red
+        binding.totalCounts.strokeWidth = 4
 
+        binding.totalPending.strokeColor = red
+        binding.totalPending.strokeWidth = 4
+    }
 
     private fun showConsumerDialogFromCount(data: CountResponse.ResData.Data) {
 
@@ -333,7 +377,6 @@ class DashBoardFragment : Fragment() {
         dialog.show()
     }
 
-
     private fun showConsumerDialog(item: TotalConsumerResponse.ResData.Data) {
 
         val dialogBinding =
@@ -368,7 +411,6 @@ class DashBoardFragment : Fragment() {
 
         dialog.show()
     }
-
 
     private fun setupToolbarTitle() {
         val titleText = "PhiTech"

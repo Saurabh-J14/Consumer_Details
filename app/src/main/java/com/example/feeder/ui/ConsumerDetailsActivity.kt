@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -15,6 +16,7 @@ import android.graphics.*
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.TextUtils
+import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
@@ -92,6 +94,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 val input = s.toString().trim().uppercase()
                 binding.etphases.setTextColor(when (input) {
                     "RYB" -> Color.parseColor("#D32F2F")
+                    "R" -> Color.parseColor("#D32F2F")
                     "RY"  -> Color.parseColor("#FFEB3B")
                     "B"   -> Color.parseColor("#1976D2")
                     "RB"   -> Color.parseColor("#1976D2")
@@ -121,7 +124,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Bluetooth ON
+
             if (!bluetoothAdapter!!.isEnabled) {
                 val enableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                 startActivityForResult(enableIntent, 111)
@@ -183,6 +186,8 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             binding.tvStatus.text = "Pairing..."
 
             device.createBond()
+        }else {
+            Log.d(TAG, "Device already bonded")
         }
 
         connectToDevice(device)
@@ -275,6 +280,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
             val mappedPhase = when (phaseInput) {
                 "RYB" -> "A"
+                "R" -> "A"
                 "RY"  -> "B"
                 "B"   -> "C"
                 "RB" -> "C"
@@ -317,7 +323,8 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             tvLabel.setTextColor(
                 when (originalPhase.uppercase()) {
 
-                    "RYB" -> Color.parseColor("#D32F2F")   // Red
+                    "RYB" -> Color.parseColor("#D32F2F")
+                    "R" ->  Color.parseColor("#D32F2F")// Red
                     "RY"  -> Color.parseColor("#FFEB3B")   // Yellow
                     "Y"   -> Color.parseColor("#FFEB3B")   // Yellow
                     "B"   -> Color.parseColor("#1976D2")   // Blue
@@ -366,6 +373,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             }
             binding.etphases.setTextColor(when (phaseInput) {
                 "RYB" -> Color.parseColor("#D32F2F")
+                "R" -> Color.parseColor("#D32F2F")
                 "RY"  -> Color.parseColor("#FFEB3B")
                 "B"   -> Color.parseColor("#1976D2")
                 "RB"   -> Color.parseColor("#1976D2")
@@ -375,6 +383,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             })
             val mappedPhase = when (phaseInput) {
                 "RYB" -> "A"
+                "R" -> "A"
                 "RY"  -> "B"
                 "B"   -> "C"
                 "RB" -> "C"
@@ -414,6 +423,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
         binding.etphases.setTextColor(when (phaseInput) {
             "RYB" -> Color.parseColor("#D32F2F")
+            "R" -> Color.parseColor("#D32F2F")
             "RY"  -> Color.parseColor("#FFEB3B")
             "B"   -> Color.parseColor("#1976D2")
             "RB"   -> Color.parseColor("#1976D2")
@@ -424,6 +434,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
         val mappedPhase = when (phaseInput) {
             "RYB" -> "A"
+            "R" -> "A"
             "RY"  -> "B"
             "B"   -> "C"
             "RB" ->  "C"
@@ -480,7 +491,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                     return@setOnClickListener
                 }
 
-                "RYB", "RY", "B","RB","YB","Y" -> {
+                "RYB","R", "RY", "B","RB","YB","Y" -> {
                 }
 
                 else -> {
