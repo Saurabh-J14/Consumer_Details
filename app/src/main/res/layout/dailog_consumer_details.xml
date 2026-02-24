@@ -111,7 +111,7 @@
                     android:textSize="11sp"
                     android:textColor="@color/black"/>
 
-                <EditText
+                <TextView
                     android:id="@+id/etvoltage"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -119,6 +119,7 @@
                     android:background="@drawable/tv_background"
                     android:hint="Voltage"
                     android:padding="5dp"
+                    android:textColor="@color/black"
                     android:textSize="11sp" />
             </LinearLayout>
 
@@ -189,7 +190,7 @@
                     android:textSize="11sp"
                     android:textColor="@color/black"/>
 
-                <EditText
+                <TextView
                     android:id="@+id/etdtc_name"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -197,6 +198,7 @@
                     android:background="@drawable/tv_background"
                     android:hint="DTC Name"
                     android:padding="5dp"
+                    android:textColor="@color/black"
                     android:textSize="11sp"/>
             </LinearLayout>
             <LinearLayout
@@ -214,7 +216,7 @@
                     android:textSize="11sp"
                     android:textColor="@color/black"/>
 
-                <EditText
+                <TextView
                     android:id="@+id/etdtc_code"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -222,6 +224,7 @@
                     android:background="@drawable/tv_background"
                     android:hint="DTC Code"
                     android:padding="5dp"
+                    android:textColor="@color/black"
                     android:textSize="11sp"/>
             </LinearLayout>
 
@@ -240,7 +243,7 @@
                     android:textSize="11sp"
                     android:textColor="@color/black"/>
 
-                <EditText
+                <TextView
                     android:id="@+id/etsanctionedload"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -248,6 +251,7 @@
                     android:background="@drawable/tv_background"
                     android:hint="SanctionedLoad"
                     android:padding="5dp"
+                    android:textColor="@color/black"
                     android:textSize="11sp"/>
             </LinearLayout>
 
@@ -266,7 +270,7 @@
                     android:textSize="11sp"
                     android:textColor="@color/black"/>
 
-                <EditText
+                <TextView
                     android:id="@+id/etlatitude"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -274,6 +278,7 @@
                     android:background="@drawable/tv_background"
                     android:hint="Latitude"
                     android:padding="5dp"
+                    android:textColor="@color/black"
                     android:textSize="11sp"/>
             </LinearLayout>
 
@@ -454,7 +459,7 @@
                     android:textSize="11sp"
                     android:textColor="@color/black"/>
 
-                <EditText
+                <TextView
                     android:id="@+id/etfeedr"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -462,6 +467,7 @@
                     android:background="@drawable/tv_background"
                     android:hint="Feeder ID"
                     android:padding="5dp"
+                    android:textColor="@color/black"
                     android:textSize="11sp"/>
             </LinearLayout>
 

@@ -194,35 +194,76 @@ class DropdownActivity : AppCompatActivity() {
     }
 
     private fun setupSubstationDropdown(list: List<String>) {
-        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, list)
-        binding.substation.setAdapter(adapter)
-        binding.substation.setOnClickListener { binding.substation.showDropDown() }
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_dropdown_item_1line,
+            list
+        )
+        binding.substation.apply {
+            setAdapter(adapter)
+            threshold = 0
+            isFocusable = true
+            isFocusableInTouchMode = true
 
-        binding.substation.setOnItemClickListener { _, _, pos, _ ->
-            val token = prefManager.getAccessToken() ?: return@setOnItemClickListener
-            feederViewModel.fetchFeederIds(token, list[pos])
+            setOnTouchListener { _, _ ->
+                showDropDown()
+                false
+            }
+
+            setOnItemClickListener { _, _, pos, _ ->
+                val token = prefManager.getAccessToken() ?: return@setOnItemClickListener
+                feederViewModel.fetchFeederIds(token, list[pos])
+            }
         }
     }
 
     private fun setupFeederDropdown(list: List<String>) {
-        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, list)
-        binding.feederIdSpin.setAdapter(adapter)
-        binding.feederIdSpin.setOnClickListener { binding.feederIdSpin.showDropDown() }
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_dropdown_item_1line,
+            list
+        )
 
-        binding.feederIdSpin.setOnItemClickListener { _, _, pos, _ ->
-            val token = prefManager.getAccessToken() ?: return@setOnItemClickListener
-            dtNameViewModel.fetchDtNames(token, list[pos])
+        binding.feederIdSpin.apply {
+            setAdapter(adapter)
+            threshold = 0   // 👈 Important fix
+            isFocusable = true
+            isFocusableInTouchMode = true
+
+            setOnTouchListener { _, _ ->
+                showDropDown()
+                false
+            }
+
+            setOnItemClickListener { _, _, pos, _ ->
+                val token = prefManager.getAccessToken() ?: return@setOnItemClickListener
+                dtNameViewModel.fetchDtNames(token, list[pos])
+            }
         }
     }
 
     private fun setupDtNameDropdown(list: List<String>) {
-        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, list)
-        binding.dtname.setAdapter(adapter)
-        binding.dtname.setOnClickListener {
-            binding.dtname.showDropDown()
-        }
-        binding.dtname.setOnItemClickListener { _, _, _, _ ->
-            binding.btnDeleteDt.visibility = View.VISIBLE
+
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_dropdown_item_1line,
+            list
+        )
+
+        binding.dtname.apply {
+            setAdapter(adapter)
+            threshold = 0   // 👈 Important fix
+            isFocusable = true
+            isFocusableInTouchMode = true
+
+            setOnTouchListener { _, _ ->
+                showDropDown()
+                false
+            }
+
+            setOnItemClickListener { _, _, _, _ ->
+                binding.btnDeleteDt.visibility = View.VISIBLE
+            }
         }
     }
 
