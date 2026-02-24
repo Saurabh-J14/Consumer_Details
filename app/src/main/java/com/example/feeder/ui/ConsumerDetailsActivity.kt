@@ -3,6 +3,7 @@ package com.example.feeder.ui
 import ConsumerUpdateBody
 import ConsumerUpdateRepository
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
@@ -13,6 +14,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.*
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.TextUtils
@@ -31,6 +33,7 @@ import com.example.feeder.ui.base.ConsumerUpdateViewModelFactory
 import com.example.feeder.ui.viewModel.ConsumerUpdateViewModel
 import com.example.feeder.utils.FusedLocationTracker
 import com.example.feeder.utils.PrefManager
+import java.io.IOException
 import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.*
@@ -39,7 +42,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityConsumerDetailsBinding
     private lateinit var prefManager: PrefManager
-
+    private val BT_PERMISSION_REQ = 1010
     private val CAMERA_REQ = 1001
     private val PERMISSION_REQ = 2001
     private var latitude = 0.0
@@ -54,8 +57,8 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private var bluetoothSocket: BluetoothSocket? = null
     private var inputStream: InputStream? = null
 
-    private val sppUUID: UUID =
-        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+//    private val sppUUID: UUID =
+//        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 
     private val viewModel: ConsumerUpdateViewModel by viewModels {
         ConsumerUpdateViewModelFactory(ConsumerUpdateRepository(RetrofitClient.getServices()))
@@ -119,15 +122,33 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
         binding.btnBluetooth.setOnClickListener {
 
+            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+
             if (bluetoothAdapter == null) {
                 Toast.makeText(this, "Bluetooth not supported", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.BLUETOOTH_CONNECT
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(
+                            Manifest.permission.BLUETOOTH_CONNECT,
+                            Manifest.permission.BLUETOOTH_SCAN
+                        ),
+                        BT_PERMISSION_REQ
+                    )
+                    return@setOnClickListener
+                }
+            }
 
             if (!bluetoothAdapter!!.isEnabled) {
-                val enableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                startActivityForResult(enableIntent, 111)
+                startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
             } else {
                 startDiscovery()
             }
@@ -139,13 +160,15 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         }
     }
     private fun startDiscovery() {
+        if (bluetoothAdapter?.isDiscovering == true) {
+            bluetoothAdapter?.cancelDiscovery()
+        }
 
         deviceList.clear()
         deviceAdapter.clear()
         binding.listDevices.visibility = View.VISIBLE
         binding.tvStatus.text = "Scanning..."
 
-        bluetoothAdapter?.cancelDiscovery()
         bluetoothAdapter?.startDiscovery()
     }
     private val bluetoothReceiver = object : BroadcastReceiver() {
@@ -159,15 +182,9 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                         intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
 
                     device?.let {
-
                         if (!deviceList.contains(it)) {
-
                             deviceList.add(it)
-
-                            deviceAdapter.add(
-                                "${it.name ?: "Unknown"}\n${it.address}"
-                            )
-
+                            deviceAdapter.add("${it.name ?: "Unknown"}\n${it.address}")
                             deviceAdapter.notifyDataSetChanged()
                         }
                     }
@@ -181,17 +198,18 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     }
     private fun pairAndConnect(device: BluetoothDevice) {
 
+        Log.d(TAG, "pairAndConnect() -> ${device.name}")
+
         if (device.bondState != BluetoothDevice.BOND_BONDED) {
 
             binding.tvStatus.text = "Pairing..."
-
             device.createBond()
-        }else {
-            Log.d(TAG, "Device already bonded")
+            return
         }
 
         connectToDevice(device)
     }
+    @SuppressLint("MissingPermission")
     private fun connectToDevice(device: BluetoothDevice) {
 
         binding.tvStatus.text = "Connecting..."
@@ -201,22 +219,28 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
                 bluetoothAdapter?.cancelDiscovery()
 
-                bluetoothSocket =
-                    device.createRfcommSocketToServiceRecord(sppUUID)
+                bluetoothSocket?.close()
+                bluetoothSocket = null
+
+//                bluetoothSocket =
+//                    device.createRfcommSocketToServiceRecord(sppUUID)
 
                 bluetoothSocket?.connect()
 
                 inputStream = bluetoothSocket?.inputStream
 
                 runOnUiThread {
-                    binding.tvStatus.text =
-                        "Connected: ${device.name}"
+                    binding.tvStatus.text = "Connected: ${device.name}"
                     binding.listDevices.visibility = View.GONE
                 }
 
                 receiveData()
 
             } catch (e: Exception) {
+
+                try {
+                    bluetoothSocket?.close()
+                } catch (_: Exception) {}
 
                 runOnUiThread {
                     binding.tvStatus.text = "Connection Failed"
@@ -231,16 +255,11 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
             while (true) {
                 try {
-
-                    val bytes =
-                        inputStream?.read(buffer) ?: break
-
-                    val received =
-                        String(buffer, 0, bytes)
+                    val bytes = inputStream?.read(buffer) ?: break
+                    val received = String(buffer, 0, bytes)
 
                     runOnUiThread {
-                        binding.tvData.text =
-                            "Received Data: $received"
+//                        binding.tvData.text = "Received Data: $received"
                     }
 
                 } catch (e: Exception) {
@@ -261,7 +280,16 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        unregisterReceiver(bluetoothReceiver)
+        try {
+            unregisterReceiver(bluetoothReceiver)
+        } catch (_: Exception) {}
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            bluetoothSocket?.close()
+        } catch (_: Exception) {}
     }
 
     private fun setupConnectDeviceButton() {
@@ -670,15 +698,19 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PERMISSION_REQ && grantResults.isNotEmpty() &&
-            grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-        ) {
-            fetchLocation()
-        } else {
-            Toast.makeText(this, "Location Permission denied", Toast.LENGTH_SHORT).show()
+        if (requestCode == BT_PERMISSION_REQ) {
+            if (grantResults.isNotEmpty() &&
+                grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            ) {
+                startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+            } else {
+                Toast.makeText(this, "Bluetooth Permission Required!", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
