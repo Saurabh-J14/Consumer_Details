@@ -620,6 +620,7 @@
                             android:layout_marginStart="20dp"
                             android:layout_marginEnd="20dp"
                             android:text="Connect Bluetooth"
+                            android:textStyle="bold"
                             android:textSize="14sp"
                             android:textAllCaps="false" />
 
@@ -643,7 +644,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:visibility="visible">
+                    android:visibility="gone">
+
                     <TextView
                         android:id="@+id/tvTitle"
                         android:layout_width="wrap_content"
@@ -682,6 +684,16 @@
                             android:textColor="#5A4A4A"/>
                     </LinearLayout>
 
+                    <EditText
+                        android:id="@+id/etMessage"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginStart="24dp"
+                        android:layout_marginEnd="24dp"
+                        android:layout_marginTop="10dp"
+                        android:hint="Enter message"
+                        android:padding="10dp"/>
+
                     <LinearLayout
                         android:id="@+id/bottomBar"
                         android:layout_width="match_parent"
@@ -689,7 +701,7 @@
                         android:layout_alignParentBottom="true"
                         android:background="#E5CACA"
                         android:gravity="center"
-                        android:visibility="visible"
+                        android:visibility="gone"
                         android:orientation="horizontal">
 
                         <LinearLayout
@@ -711,6 +723,7 @@
                                 android:text="Receive"
                                 android:textSize="16sp"
                                 android:textColor="#4A2C2C"/>
+
                         </LinearLayout>
 
                         <LinearLayout

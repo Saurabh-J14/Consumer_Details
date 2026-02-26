@@ -21,6 +21,7 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -56,6 +57,13 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private lateinit var deviceAdapter: ArrayAdapter<String>
     private var bluetoothSocket: BluetoothSocket? = null
     private var inputStream: InputStream? = null
+    private val receivedDataBuilder = StringBuilder()
+    private var isReceiving = false
+    private val receivedBytes = mutableListOf<Byte>()   // collect all binary data
+    private lateinit var tvReceivedData: TextView       // keep for debug text
+    private val PICK_IMAGE_REQUEST = 1002
+    private var isBluetoothConnected = false
+    private var outputStream: java.io.OutputStream? = null
 
 //    private val sppUUID: UUID =
 //        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
@@ -107,7 +115,52 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 })
             }
         })
+
+        binding.btnReceive.setOnClickListener {
+            if (bluetoothSocket?.isConnected != true) {
+                Toast.makeText(this, "Not connected", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            isReceiving = !isReceiving
+
+            if (isReceiving) {
+                receivedBytes.clear()
+                tvReceivedData.text = "Receiving image bytes..."
+                tvReceivedData.visibility = View.VISIBLE
+                binding.tvStatuss.text = "Receiving image..."
+                binding.images.setImageResource(android.R.drawable.stat_sys_download)
+                Toast.makeText(this, "Started receiving (binary)", Toast.LENGTH_SHORT).show()
+
+
+            } else {
+                binding.tvStatuss.text = "Ready to receive"
+                binding.images.setImageResource(R.drawable.receive)
+                tvReceivedData.visibility = View.GONE
+                Toast.makeText(this, "Stopped receiving", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        binding.btnSend.setOnClickListener {
+
+            if (!isBluetoothConnected) {
+                Toast.makeText(this, "Not connected", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val message = binding.etMessage.text.toString().trim()
+
+            if (message.isEmpty()) {
+                Toast.makeText(this, "Enter message", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            sendTextMessage("T:$message")   // 👈 Prefix add kiya
+
+            binding.etMessage.text?.clear()
+        }
     }
+
     private fun setupBluetooth() {
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -159,6 +212,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             pairAndConnect(device)
         }
     }
+
     private fun startDiscovery() {
         if (bluetoothAdapter?.isDiscovering == true) {
             bluetoothAdapter?.cancelDiscovery()
@@ -171,6 +225,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
         bluetoothAdapter?.startDiscovery()
     }
+
     private val bluetoothReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
 
@@ -193,9 +248,22 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
                     binding.tvStatus.text = "Select Device"
                 }
+                BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
+
+                    runOnUiThread {
+                        binding.tvStatus.text = "Device Disconnected"
+                        binding.recevie.visibility = View.GONE
+                        binding.bottomBar.visibility = View.GONE
+                    }
+
+                   try {
+                        bluetoothSocket?.close()
+                    } catch (_: Exception) {}
+                }
             }
         }
     }
+
     private fun pairAndConnect(device: BluetoothDevice) {
 
         Log.d(TAG, "pairAndConnect() -> ${device.name}")
@@ -209,6 +277,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
         connectToDevice(device)
     }
+
     @SuppressLint("MissingPermission")
     private fun connectToDevice(device: BluetoothDevice) {
 
@@ -218,7 +287,12 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             try {
 
                 bluetoothAdapter?.cancelDiscovery()
-
+                bluetoothSocket?.connect()
+                bluetoothSocket = null
+                val MY_UUID = java.util.UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+                bluetoothSocket = device.createRfcommSocketToServiceRecord(MY_UUID)
+                inputStream = bluetoothSocket?.inputStream
+                outputStream = bluetoothSocket?.outputStream
                 bluetoothSocket?.close()
                 bluetoothSocket = null
 
@@ -232,6 +306,9 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 runOnUiThread {
                     binding.tvStatus.text = "Connected: ${device.name}"
                     binding.listDevices.visibility = View.GONE
+                    binding.recevie.visibility = View.VISIBLE
+                    binding.bottomBar.visibility = View.VISIBLE
+                    isBluetoothConnected = true
                 }
 
                 receiveData()
@@ -244,28 +321,90 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
                 runOnUiThread {
                     binding.tvStatus.text = "Connection Failed"
+                    binding.recevie.visibility = View.GONE
+                    binding.bottomBar.visibility = View.GONE
+                    Toast.makeText(this@ConsumerDetailsActivity, "Connection failed: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }.start()
     }
+//
+//    private fun receiveData() {
+//
+//        Thread {
+//            val buffer = ByteArray(1024)
+//
+//            while (true) {
+//                try {
+//                    val bytes = inputStream?.read(buffer) ?: break
+//                    val received = String(buffer, 0, bytes)
+//
+//                    runOnUiThread {
+//                        // binding.tvData.text = "Received Data: $received"
+//                    }
+//
+//                } catch (e: Exception) {
+//
+//                    runOnUiThread {
+//                        binding.tvStatus.text = "Disconnected"
+//                        binding.recevie.visibility = View.GONE
+//                        binding.bottomBar.visibility = View.GONE
+//                    }
+//
+//                    break
+//                }
+//            }
+//        }.start()
+//    }
+
     private fun receiveData() {
 
         Thread {
+
             val buffer = ByteArray(1024)
 
             while (true) {
                 try {
-                    val bytes = inputStream?.read(buffer) ?: break
-                    val received = String(buffer, 0, bytes)
 
-                    runOnUiThread {
-//                        binding.tvData.text = "Received Data: $received"
+                    val bytesRead = inputStream?.read(buffer) ?: break
+
+                    if (bytesRead > 0) {
+
+                        val receivedText = String(buffer, 0, bytesRead).trim()
+
+                        runOnUiThread {
+
+                            when {
+                                receivedText.startsWith("T:") -> {
+
+                                    val actualText = receivedText.removePrefix("T:")
+                                    binding.tvStatuss.text = "Received: $actualText"
+                                }
+
+                                receivedText.startsWith("I:") -> {
+
+                                    binding.tvStatuss.text = "Receiving Image..."
+                                }
+
+                                else -> {
+                                    binding.tvStatuss.text = "Unknown Data"
+                                }
+                            }
+                        }
                     }
 
                 } catch (e: Exception) {
+
+                    runOnUiThread {
+                        binding.tvStatus.text = "Disconnected"
+                        binding.recevie.visibility = View.GONE
+                        binding.bottomBar.visibility = View.GONE
+                    }
+
                     break
                 }
             }
+
         }.start()
     }
     override fun onResume() {
@@ -274,11 +413,14 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         val filter = IntentFilter()
         filter.addAction(BluetoothDevice.ACTION_FOUND)
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
 
         registerReceiver(bluetoothReceiver, filter)
     }
 
     override fun onPause() {
+//        binding.recevie.visibility = View.GONE
+//        binding.bottomBar.visibility = View.GONE
         super.onPause()
         try {
             unregisterReceiver(bluetoothReceiver)
@@ -333,7 +475,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         val btnConfirm = dialogView.findViewById<android.widget.Button>(R.id.tvDialogTitle)
         val btnExit = dialogView.findViewById<android.widget.Button>(R.id.btnExit)
         val btnRetry = dialogView.findViewById<android.widget.Button>(R.id.btnretry)
-
+        btnConfirm.isEnabled = false
         tvLabel.visibility = View.INVISIBLE
 
         val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
@@ -347,6 +489,8 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
         dialogPhasorView.setOnRotationCompleteListener {
             tvLabel.text = " $originalPhase"
+            tvLabel.visibility = View.VISIBLE
+            btnConfirm.isEnabled = true
 
             tvLabel.setTextColor(
                 when (originalPhase.uppercase()) {
@@ -381,6 +525,8 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         }
 
         btnRetry.setOnClickListener {
+            btnConfirm.isEnabled = false
+            tvLabel.visibility = View.INVISIBLE
             dialogPhasorView.needleAngle = 90f
             dialogPhasorView.startFiveSecondRotation(mappedPhase)
         }
@@ -481,10 +627,27 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         fetchLocation()
     }
 
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//        super.onActivityResult(requestCode, resultCode, data)
+//
+//        if (requestCode == CAMERA_REQ && resultCode == RESULT_OK) {
+//            val bitmap = data?.extras?.get("data") as? Bitmap
+//            if (bitmap != null) {
+//                val finalBitmap = drawTextOnBitmap(bitmap)
+//                capturedBitmap = finalBitmap
+//                binding.imgPhoto.visibility = View.VISIBLE
+//                binding.imgPhoto.setImageBitmap(finalBitmap)
+//            } else {
+//                Toast.makeText(this, "Image capture failed", Toast.LENGTH_SHORT).show()
+//            }
+//        }
+//    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == CAMERA_REQ && resultCode == RESULT_OK) {
+            // Your existing camera code (keep it if needed)
             val bitmap = data?.extras?.get("data") as? Bitmap
             if (bitmap != null) {
                 val finalBitmap = drawTextOnBitmap(bitmap)
@@ -494,9 +657,76 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, "Image capture failed", Toast.LENGTH_SHORT).show()
             }
+            return
+        }
+
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
+            val uri = data.data ?: return
+
+            Thread {
+                try {
+                    val input = contentResolver.openInputStream(uri) ?: throw IOException("Cannot open stream")
+                    val fileBytes = input.readBytes()
+                    input.close()
+
+                    if (fileBytes.isEmpty()) {
+                        runOnUiThread { Toast.makeText(this, "Empty file", Toast.LENGTH_SHORT).show() }
+                        return@Thread
+                    }
+
+                    val os = bluetoothSocket?.outputStream ?: throw IOException("No output stream")
+
+                    // Optional: Send simple header (4 bytes length + 1 byte type: 1=image, 2=video)
+                    val fileSize = fileBytes.size
+                    val header = byteArrayOf(
+                        (fileSize shr 24).toByte(),
+                        (fileSize shr 16).toByte(),
+                        (fileSize shr 8).toByte(),
+                        fileSize.toByte(),
+                        1.toByte()  // 1 = image (you can change to 2 for video if needed)
+                    )
+                    os.write(header)
+
+                    // Send file in chunks (safe for large files)
+                    val chunkSize = 4096  // 4KB chunks – adjust if needed
+                    var bytesSent = 0
+
+                    runOnUiThread {
+                        Toast.makeText(this, "Sending ${fileBytes.size / 1024} KB...", Toast.LENGTH_SHORT).show()
+                    }
+
+                    while (bytesSent < fileBytes.size) {
+                        val remaining = fileBytes.size - bytesSent
+                        val sizeThisTime = minOf(chunkSize, remaining)
+
+                        os.write(fileBytes, bytesSent, sizeThisTime)
+                        os.flush()  // important after each chunk
+
+                        bytesSent += sizeThisTime
+
+                        // Optional: show progress (add a ProgressBar if you want)
+                        val percent = (bytesSent * 100 / fileBytes.size)
+                        runOnUiThread {
+                            binding.tvStatuss.text = "Sending... $percent%"
+                        }
+                    }
+
+                    os.flush()
+
+                    runOnUiThread {
+                        Toast.makeText(this, "File sent successfully (${fileBytes.size} bytes)", Toast.LENGTH_LONG).show()
+                        binding.tvStatuss.text = "Ready to receive"
+                    }
+
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        Toast.makeText(this, "Send failed: ${e.message}", Toast.LENGTH_LONG).show()
+                        Log.e("BluetoothSend", "Error sending file", e)
+                    }
+                }
+            }.start()
         }
     }
-
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.apply {
@@ -722,5 +952,30 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             startActivityForResult(intent, CAMERA_REQ)
         }
+    }
+
+    private fun sendTextMessage(message: String) {
+
+        if (!isBluetoothConnected || outputStream == null) {
+            Toast.makeText(this, "Not connected", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        Thread {
+            try {
+                val messageWithEnd = message + "\n"   // newline important
+                outputStream?.write(messageWithEnd.toByteArray())
+                outputStream?.flush()
+
+                runOnUiThread {
+                    binding.tvStatuss.text = "Sent: $message"
+                }
+
+            } catch (e: Exception) {
+                runOnUiThread {
+                    Toast.makeText(this, "Send failed: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
     }
 }
