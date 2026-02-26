@@ -114,7 +114,6 @@ class DashBoardFragment : Fragment() {
             val token = prefManager.getAccessToken() ?: return@setOnClickListener
             binding.rvConsumerList.visibility = View.VISIBLE
             viewModel.getConsumerCount("Bearer $token")
-
             highlightCard("COUNT")
         }
 
@@ -122,7 +121,6 @@ class DashBoardFragment : Fragment() {
             val token = prefManager.getAccessToken() ?: return@setOnClickListener
             binding.rvConsumerList.visibility = View.VISIBLE
             pendingViewModel.getPendingConsumers("Bearer $token")
-
             highlightCard("PENDING")
         }
 
@@ -199,7 +197,6 @@ class DashBoardFragment : Fragment() {
 
                         if (resData != null) {
                             binding.rvConsumerList.visibility = View.VISIBLE
-
 
                             binding.rvConsumerList.adapter =
                                 ConsumerCountAdapter(resData.data) { selectedItem ->
@@ -515,6 +512,11 @@ class DashBoardFragment : Fragment() {
                 }
             }
         }
+    }
+    override fun onResume() {
+        super.onResume()
+
+        loadPendingCount()   // count refresh
     }
 
     private fun initUI() {

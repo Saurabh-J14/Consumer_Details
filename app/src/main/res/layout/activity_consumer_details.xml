@@ -620,13 +620,14 @@
                             android:layout_marginStart="20dp"
                             android:layout_marginEnd="20dp"
                             android:text="Connect Bluetooth"
+                            android:textStyle="bold"
                             android:textSize="14sp"
                             android:textAllCaps="false" />
 
                         <ListView
                             android:id="@+id/listDevices"
                             android:layout_width="match_parent"
-                            android:layout_height="200dp"
+                            android:layout_height="400dp"
                             android:visibility="gone"/>
 
                         <TextView
@@ -636,47 +637,145 @@
                             android:textSize="16sp"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"/>
+                    </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/recevie"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tvTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sharing with you"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:textColor="#5A4A4A"
+                        android:layout_marginStart="24dp"
+                        android:layout_marginTop="40dp"/>
+
+                    <LinearLayout
+                        android:id="@+id/centerCard"
+                        android:layout_width="match_parent"
+                        android:layout_height="250dp"
+                        android:layout_below="@id/tvTitle"
+                        android:layout_margin="24dp"
+                        android:background="@drawable/bg_card"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="20dp">
+
+                        <ImageView
+                            android:id="@+id/images"
+                            android:layout_width="60dp"
+                            android:layout_height="60dp"
+                            android:src="@drawable/receive"
+                            android:layout_marginBottom="15dp"/>
 
                         <TextView
-                            android:id="@+id/tvData"
-                            android:layout_marginTop="20dp"
-                            android:text="Received Data:"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
+                            android:id="@+id/tvStatuss"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
+                            android:layout_height="wrap_content"
+                            android:text="Ready to receive"
+                            android:textSize="20sp"
+                            android:textColor="#5A4A4A"/>
+                    </LinearLayout>
+
+                    <EditText
+                        android:id="@+id/etMessage"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginStart="24dp"
+                        android:layout_marginEnd="24dp"
+                        android:layout_marginTop="10dp"
+                        android:hint="Enter message"
+                        android:padding="10dp"/>
+
+                    <LinearLayout
+                        android:id="@+id/bottomBar"
+                        android:layout_width="match_parent"
+                        android:layout_height="100dp"
+                        android:layout_alignParentBottom="true"
+                        android:background="#E5CACA"
+                        android:gravity="center"
+                        android:visibility="gone"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/btnReceive"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:src="@android:drawable/stat_sys_download_done"                                    />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Receive"
+                                android:textSize="16sp"
+                                android:textColor="#4A2C2C"/>
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <ImageView
+                                android:id="@+id/btnSend"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:src="@android:drawable/stat_sys_upload_done" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Send"
+                                android:textSize="16sp"
+                                android:textColor="#4A2C2C"/>
+                        </LinearLayout>
 
                     </LinearLayout>
 
-
-
-
+                </LinearLayout>
 
                 <!-- <LinearLayout
-                     android:layout_width="match_parent"
-                     android:layout_height="wrap_content"
-                     android:layout_marginTop="25dp"
-                     android:layout_weight="1"
-                     android:orientation="vertical"
-                     android:gravity="center">
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
 
-                     <com.example.feeder.custom.Donut3DChartView
-                         android:id="@+id/donutChart"
-                         android:layout_width="250dp"
-                         android:layout_height="250dp"
-                         android:layout_gravity="center"/>
+                    <com.example.feeder.custom.Donut3DChartView
+                        android:id="@+id/donutChart"
+                        android:layout_width="250dp"
+                        android:layout_height="250dp"
+                        android:layout_gravity="center"/>
 
-                     <TextView
-                         android:id="@+id/total"
-                         android:layout_width="wrap_content"
-                         android:layout_height="wrap_content"
-                         android:layout_marginTop="6dp"
-                         android:text="Confrom Phase"
-                         android:textColor="@color/black"
-                         android:textSize="12sp"
-                         android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/total"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Confrom Phase"
+                        android:textColor="@color/black"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
 
-                 </LinearLayout>-->
+                </LinearLayout>-->
 
                 <LinearLayout
                     android:id="@+id/layoutSpeedometer"
@@ -691,8 +790,6 @@
                         android:id="@+id/phasorView"
                         android:layout_width="250dp"
                         android:layout_height="250dp"/>
-
-
 
                     <TextView
                         android:id="@+id/tvSpeedLabel"

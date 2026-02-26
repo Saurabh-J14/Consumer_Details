@@ -6,27 +6,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-<!--    <com.google.android.material.appbar.AppBarLayout-->
-<!--        android:id="@+id/headerView"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:background="@color/blue_dark"-->
-<!--        android:fitsSystemWindows="true"-->
-<!--        app:layout_constraintTop_toTopOf="parent">-->
-
-<!--        <androidx.appcompat.widget.Toolbar-->
-<!--            android:id="@+id/toolbar"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="?attr/actionBarSize"-->
-<!--            android:background="@color/blue_dark"-->
-<!--            app:title="Dashboard"-->
-<!--            app:titleTextColor="@color/white"-->
-<!--            app:popupTheme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">-->
-
-
-<!--        </androidx.appcompat.widget.Toolbar>-->
-
-<!--    </com.google.android.material.appbar.AppBarLayout>-->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/headerView"
         android:layout_width="match_parent"
@@ -78,34 +57,8 @@
 
             <include layout="@layout/data_placeholder_layout" />
 
-<!--            <include layout="@layout/data_placeholder_layout" />-->
-
-<!--            <include layout="@layout/data_placeholder_layout" />-->
-
-<!--            <include layout="@layout/data_placeholder_layout" />-->
-
-<!--            <include layout="@layout/data_placeholder_layout" />-->
-
-<!--            <include layout="@layout/data_placeholder_layout" />-->
         </LinearLayout>
     </com.facebook.shimmer.ShimmerFrameLayout>
-
-    <!--      <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-            android:id="@+id/btnstart"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="14dp"
-            android:layout_marginBottom="45dp"
-            android:backgroundTint="@color/blue_dark"
-            android:gravity="center"
-
-            android:nestedScrollingEnabled="false"
-            android:text="@string/start"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />-->
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeLayout"
@@ -289,8 +242,6 @@
 
                     </LinearLayout>
 
-
-
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvConsumerList"
                         android:layout_width="match_parent"
@@ -299,82 +250,11 @@
                         android:background="@drawable/btn_rounded"
                         android:visibility="gone" />
 
-
-                    <!--                    <ImageButton-->
-                    <!--                        android:id="@+id/btnDashboard"-->
-                    <!--                        android:layout_width="wrap_content"-->
-                    <!--                        android:layout_height="wrap_content"-->
-                    <!--                        android:layout_gravity="end"-->
-                    <!--                        android:layout_marginTop="400dp"-->
-                    <!--                        android:layout_marginEnd="40dp"-->
-                    <!--                        android:background="@android:color/transparent"-->
-                    <!--                        android:backgroundTint="@color/blue"-->
-                    <!--                        android:contentDescription="@string/app_name"-->
-                    <!--                        android:src="@drawable/dashboard_consumer"-->
-                    <!--                        android:tint="@color/blue" />-->
-
                 </LinearLayout>
-
-
-                <!-- <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginStart="20dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/philtech"
-                        android:textColor="@color/black"
-                        android:textStyle="bold"
-                        android:textSize="20sp" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <View
-                            android:id="@+id/v2"
-                            android:layout_width="130dp"
-                            android:layout_height="2dp"
-                            android:background="@color/green" />
-
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/utilitynetapp"
-                        android:textColor="@color/black"
-                        android:textStyle="bold"
-                        android:layout_marginTop="10dp"
-                        android:textSize="20sp" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <View
-                            android:id="@+id/v1"
-                            android:layout_width="130dp"
-                            android:layout_height="2dp"
-                            android:background="@color/green" />
-
-                    </LinearLayout>
-
-
-                </LinearLayout>-->
-
 
             </LinearLayout>
 
-
         </ScrollView>
-
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
@@ -388,6 +268,5 @@
         android:tint="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
