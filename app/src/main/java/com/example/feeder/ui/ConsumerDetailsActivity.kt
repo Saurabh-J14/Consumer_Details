@@ -5,10 +5,7 @@ import ConsumerUpdateRepository
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
-import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -21,7 +18,6 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -30,20 +26,22 @@ import androidx.core.content.ContextCompat
 import com.example.feeder.R
 import com.example.feeder.data.remote.RetrofitClient
 import com.example.feeder.databinding.ActivityConsumerDetailsBinding
+import com.example.feeder.service.BluetoothLeService
 import com.example.feeder.ui.base.ConsumerUpdateViewModelFactory
 import com.example.feeder.ui.viewModel.ConsumerUpdateViewModel
 import com.example.feeder.utils.FusedLocationTracker
 import com.example.feeder.utils.PrefManager
-import java.io.IOException
-import java.io.InputStream
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
 class ConsumerDetailsActivity : AppCompatActivity() {
 
+    companion object { private const val TAG = "ConsumerDetailsActivity" }
     private lateinit var binding: ActivityConsumerDetailsBinding
     private lateinit var prefManager: PrefManager
     private val BT_PERMISSION_REQ = 1010
+    private val REQ_ENABLE_BT = 1011
     private val CAMERA_REQ = 1001
     private val PERMISSION_REQ = 2001
     private var latitude = 0.0
@@ -53,17 +51,10 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationTracker
 
     private var bluetoothAdapter: BluetoothAdapter? = null
-    private val deviceList = mutableListOf<BluetoothDevice>()
+    private val deviceAddresses = mutableListOf<String>()
+    private val deviceLabels = mutableListOf<String>()
     private lateinit var deviceAdapter: ArrayAdapter<String>
-    private var bluetoothSocket: BluetoothSocket? = null
-    private var inputStream: InputStream? = null
-    private val receivedDataBuilder = StringBuilder()
-    private var isReceiving = false
-    private val receivedBytes = mutableListOf<Byte>()   // collect all binary data
-    private lateinit var tvReceivedData: TextView       // keep for debug text
-    private val PICK_IMAGE_REQUEST = 1002
-    private var isBluetoothConnected = false
-    private var outputStream: java.io.OutputStream? = null
+    private var isScanning = false
 
 //    private val sppUUID: UUID =
 //        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
@@ -90,7 +81,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         setupToolbar()
         setupUpdateButton()
         loadConsumerData()
-        setupBluetooth()
+        setupBleUi()
 
 
         binding.swipeRefresh.setOnRefreshListener {
@@ -115,63 +106,19 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 })
             }
         })
-
-        binding.btnReceive.setOnClickListener {
-            if (bluetoothSocket?.isConnected != true) {
-                Toast.makeText(this, "Not connected", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            isReceiving = !isReceiving
-
-            if (isReceiving) {
-                receivedBytes.clear()
-                tvReceivedData.text = "Receiving image bytes..."
-                tvReceivedData.visibility = View.VISIBLE
-                binding.tvStatuss.text = "Receiving image..."
-                binding.images.setImageResource(android.R.drawable.stat_sys_download)
-                Toast.makeText(this, "Started receiving (binary)", Toast.LENGTH_SHORT).show()
-
-
-            } else {
-                binding.tvStatuss.text = "Ready to receive"
-                binding.images.setImageResource(R.drawable.receive)
-                tvReceivedData.visibility = View.GONE
-                Toast.makeText(this, "Stopped receiving", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        binding.btnSend.setOnClickListener {
-
-            if (!isBluetoothConnected) {
-                Toast.makeText(this, "Not connected", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            val message = binding.etMessage.text.toString().trim()
-
-            if (message.isEmpty()) {
-                Toast.makeText(this, "Enter message", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            sendTextMessage("T:$message")   // 👈 Prefix add kiya
-
-            binding.etMessage.text?.clear()
-        }
     }
-
-    private fun setupBluetooth() {
+    @SuppressLint("MissingPermission")
+    private fun setupBleUi() {
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 
-        deviceAdapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_list_item_1,
-            mutableListOf()
-        )
+        deviceAdapter = ArrayAdapter(this, R.layout.item_ble_device, R.id.tvBleDevice, deviceLabels)
 
         binding.listDevices.adapter = deviceAdapter
+        binding.listDevices.setOnTouchListener { v, _ ->
+            v.parent.requestDisallowInterceptTouchEvent(true)
+            false
+        }
 
         binding.btnBluetooth.setOnClickListener {
 
@@ -182,255 +129,196 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (ContextCompat.checkSelfPermission(
-                        this,
-                        Manifest.permission.BLUETOOTH_CONNECT
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    ActivityCompat.requestPermissions(
-                        this,
-                        arrayOf(
-                            Manifest.permission.BLUETOOTH_CONNECT,
-                            Manifest.permission.BLUETOOTH_SCAN
-                        ),
-                        BT_PERMISSION_REQ
-                    )
-                    return@setOnClickListener
-                }
+            if (!ensureBlePermissions()) return@setOnClickListener
+
+            if (bluetoothAdapter?.isEnabled != true) {
+                startActivityForResult(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), REQ_ENABLE_BT)
+                return@setOnClickListener
             }
 
-            if (!bluetoothAdapter!!.isEnabled) {
-                startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+            if (isScanning) {
+                stopBleScan()
             } else {
-                startDiscovery()
+                startBleScan()
             }
         }
 
         binding.listDevices.setOnItemClickListener { _, _, position, _ ->
-            val device = deviceList[position]
-            pairAndConnect(device)
+            val address = deviceAddresses.getOrNull(position) ?: return@setOnItemClickListener
+            connectToBleDevice(address)
         }
     }
 
-    private fun startDiscovery() {
-        if (bluetoothAdapter?.isDiscovering == true) {
-            bluetoothAdapter?.cancelDiscovery()
-        }
-
-        deviceList.clear()
-        deviceAdapter.clear()
+    private fun startBleScan() {
+        deviceAddresses.clear()
+        deviceLabels.clear()
+        deviceAdapter.notifyDataSetChanged()
         binding.listDevices.visibility = View.VISIBLE
-        binding.tvStatus.text = "Scanning..."
-
-        bluetoothAdapter?.startDiscovery()
+        binding.tvBleStatus.text = "Status: Scanning..."
+        binding.btnBluetooth.text = "Stop Scan"
+        isScanning = true
+        startBleService(BluetoothLeService.ACTION_START_SCAN)
     }
 
-    private val bluetoothReceiver = object : BroadcastReceiver() {
+    private fun stopBleScan() {
+        binding.tvBleStatus.text = "Status: Scan stopped"
+        binding.btnBluetooth.text = "Scan BLE Devices"
+        isScanning = false
+        startBleService(BluetoothLeService.ACTION_STOP_SCAN)
+    }
+
+    private fun connectToBleDevice(address: String) {
+        binding.tvBleStatus.text = "Status: Connecting..."
+        startBleService(BluetoothLeService.ACTION_CONNECT, address)
+    }
+
+    private fun startBleService(action: String, address: String? = null) {
+        val intent = Intent(this, BluetoothLeService::class.java).apply {
+            this.action = action
+            if (address != null) {
+                putExtra(BluetoothLeService.EXTRA_DEVICE_ADDRESS, address)
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+
+    private fun ensureBlePermissions(): Boolean {
+        val permissions = mutableListOf<String>()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.BLUETOOTH_SCAN)
+            }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+        }
+
+        if (permissions.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, permissions.toTypedArray(), BT_PERMISSION_REQ)
+            return false
+        }
+
+        return true
+    }
+
+    private val bleReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-
             when (intent?.action) {
-
-                BluetoothDevice.ACTION_FOUND -> {
-
-                    val device: BluetoothDevice? =
-                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-
-                    device?.let {
-                        if (!deviceList.contains(it)) {
-                            deviceList.add(it)
-                            deviceAdapter.add("${it.name ?: "Unknown"}\n${it.address}")
-                            deviceAdapter.notifyDataSetChanged()
-                        }
+                BluetoothLeService.ACTION_DEVICE_FOUND -> {
+                    val name = intent.getStringExtra(BluetoothLeService.EXTRA_DEVICE_NAME) ?: "Unknown"
+                    val address = intent.getStringExtra(BluetoothLeService.EXTRA_DEVICE_ADDRESS) ?: return
+                    if (!deviceAddresses.contains(address)) {
+                        deviceAddresses.add(address)
+                        deviceLabels.add("$name\n$address")
+                        deviceAdapter.notifyDataSetChanged()
+                        Log.d(TAG, "BLE device found: name=$name, address=$address")
                     }
                 }
-
-                BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-                    binding.tvStatus.text = "Select Device"
-                }
-                BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
-
-                    runOnUiThread {
-                        binding.tvStatus.text = "Device Disconnected"
-                        binding.recevie.visibility = View.GONE
-                        binding.bottomBar.visibility = View.GONE
+                BluetoothLeService.ACTION_STATUS -> {
+                    val status = intent.getStringExtra(BluetoothLeService.EXTRA_STATUS) ?: ""
+                    if (status.startsWith("Connected")) {
+                        Log.d(TAG, "BLE connected: $status")
                     }
-
-                   try {
-                        bluetoothSocket?.close()
-                    } catch (_: Exception) {}
+                    binding.tvBleStatus.text = "Status: $status"
+                    if (status.startsWith("Connected")) {
+                        binding.listDevices.visibility = View.GONE
+                        binding.btnBluetooth.text = "Scan BLE Devices"
+                        isScanning = false
+                    }
                 }
-            }
-        }
-    }
-
-    private fun pairAndConnect(device: BluetoothDevice) {
-
-        Log.d(TAG, "pairAndConnect() -> ${device.name}")
-
-        if (device.bondState != BluetoothDevice.BOND_BONDED) {
-
-            binding.tvStatus.text = "Pairing..."
-            device.createBond()
-            return
-        }
-
-        connectToDevice(device)
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun connectToDevice(device: BluetoothDevice) {
-
-        binding.tvStatus.text = "Connecting..."
-
-        Thread {
-            try {
-
-                bluetoothAdapter?.cancelDiscovery()
-                bluetoothSocket?.connect()
-                bluetoothSocket = null
-                val MY_UUID = java.util.UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-                bluetoothSocket = device.createRfcommSocketToServiceRecord(MY_UUID)
-                inputStream = bluetoothSocket?.inputStream
-                outputStream = bluetoothSocket?.outputStream
-                bluetoothSocket?.close()
-                bluetoothSocket = null
-
-//                bluetoothSocket =
-//                    device.createRfcommSocketToServiceRecord(sppUUID)
-
-                bluetoothSocket?.connect()
-
-                inputStream = bluetoothSocket?.inputStream
-
-                runOnUiThread {
-                    binding.tvStatus.text = "Connected: ${device.name}"
-                    binding.listDevices.visibility = View.GONE
-                    binding.recevie.visibility = View.VISIBLE
-                    binding.bottomBar.visibility = View.VISIBLE
-                    isBluetoothConnected = true
-                }
-
-                receiveData()
-
-            } catch (e: Exception) {
-
-                try {
-                    bluetoothSocket?.close()
-                } catch (_: Exception) {}
-
-                runOnUiThread {
-                    binding.tvStatus.text = "Connection Failed"
-                    binding.recevie.visibility = View.GONE
-                    binding.bottomBar.visibility = View.GONE
-                    Toast.makeText(this@ConsumerDetailsActivity, "Connection failed: ${e.message}", Toast.LENGTH_LONG).show()
-                }
-            }
-        }.start()
-    }
-//
-//    private fun receiveData() {
-//
-//        Thread {
-//            val buffer = ByteArray(1024)
-//
-//            while (true) {
-//                try {
-//                    val bytes = inputStream?.read(buffer) ?: break
-//                    val received = String(buffer, 0, bytes)
-//
-//                    runOnUiThread {
-//                        // binding.tvData.text = "Received Data: $received"
-//                    }
-//
-//                } catch (e: Exception) {
-//
-//                    runOnUiThread {
-//                        binding.tvStatus.text = "Disconnected"
-//                        binding.recevie.visibility = View.GONE
-//                        binding.bottomBar.visibility = View.GONE
-//                    }
-//
-//                    break
-//                }
-//            }
-//        }.start()
-//    }
-
-    private fun receiveData() {
-
-        Thread {
-
-            val buffer = ByteArray(1024)
-
-            while (true) {
-                try {
-
-                    val bytesRead = inputStream?.read(buffer) ?: break
-
-                    if (bytesRead > 0) {
-
-                        val receivedText = String(buffer, 0, bytesRead).trim()
-
-                        runOnUiThread {
-
-                            when {
-                                receivedText.startsWith("T:") -> {
-
-                                    val actualText = receivedText.removePrefix("T:")
-                                    binding.tvStatuss.text = "Received: $actualText"
-                                }
-
-                                receivedText.startsWith("I:") -> {
-
-                                    binding.tvStatuss.text = "Receiving Image..."
-                                }
-
-                                else -> {
-                                    binding.tvStatuss.text = "Unknown Data"
-                                }
+                BluetoothLeService.ACTION_DATA -> {
+                    val type = intent.getStringExtra(BluetoothLeService.EXTRA_DATA_TYPE)
+                    val text = intent.getStringExtra(BluetoothLeService.EXTRA_DATA_TEXT)
+                    val bytes = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA_BYTES)
+                    Log.d(
+                        TAG,
+                        "BLE data received: type=$type, textPreview=${text?.take(80)}, bytes=${bytes?.size ?: 0}"
+                    )
+                    if (!text.isNullOrBlank()) {
+                        val fullText = text.take(2000)
+                        Log.d(TAG, "BLE data text (up to 2000 chars): $fullText")
+                    }
+                    if (bytes != null && bytes.isNotEmpty()) {
+                        val hex = bytes.take(256).joinToString("") { "%02X".format(it) }
+                        Log.d(TAG, "BLE data bytes (first 256 bytes hex): $hex")
+                    }
+                    binding.tvBleStatus.text = "Status: Receiving data..."
+                    when (type) {
+                        BluetoothLeService.DATA_TYPE_IMAGE -> {
+                            if (bytes != null) {
+                                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                                binding.imgBleData.visibility = View.VISIBLE
+                                binding.imgBleData.setImageBitmap(bitmap)
+                                binding.tvBleData.text = "Image received (${bytes.size} bytes)"
                             }
                         }
+                        BluetoothLeService.DATA_TYPE_FILE -> {
+                            val name = intent.getStringExtra(BluetoothLeService.EXTRA_FILE_NAME) ?: "file"
+                            val mime = intent.getStringExtra(BluetoothLeService.EXTRA_FILE_MIME) ?: "application/octet-stream"
+                            val path = intent.getStringExtra(BluetoothLeService.EXTRA_FILE_PATH) ?: ""
+                            val size = intent.getLongExtra(BluetoothLeService.EXTRA_FILE_SIZE, 0L)
+
+                            binding.imgBleData.visibility = View.GONE
+
+                            if (mime == "text/plain" || name.endsWith(".txt", true)) {
+                                val content = runCatching {
+                                    File(path).readText(Charsets.UTF_8)
+                                }.getOrNull()
+                                val preview = content?.take(8000) ?: "Unable to read text"
+                                binding.tvBleData.text = "TXT: $name (${size} bytes)\n$preview"
+                            } else if (mime == "application/pdf" || name.endsWith(".pdf", true)) {
+                                binding.tvBleData.text = "PDF received: $name (${size} bytes)\nSaved at: $path"
+                            } else {
+                                binding.tvBleData.text = "File received: $name (${size} bytes)\nSaved at: $path"
+                            }
+                        }
+                        BluetoothLeService.DATA_TYPE_JSON -> {
+                            binding.imgBleData.visibility = View.GONE
+                            binding.tvBleData.text = text ?: "JSON received"
+                        }
+                        BluetoothLeService.DATA_TYPE_TEXT -> {
+                            binding.imgBleData.visibility = View.GONE
+                            binding.tvBleData.text = text ?: "Text received"
+                        }
+                        else -> {
+                            binding.imgBleData.visibility = View.GONE
+                            binding.tvBleData.text = text ?: "Binary data received"
+                        }
                     }
-
-                } catch (e: Exception) {
-
-                    runOnUiThread {
-                        binding.tvStatus.text = "Disconnected"
-                        binding.recevie.visibility = View.GONE
-                        binding.bottomBar.visibility = View.GONE
-                    }
-
-                    break
                 }
             }
-
-        }.start()
-    }
-    override fun onResume() {
-        super.onResume()
-
-        val filter = IntentFilter()
-        filter.addAction(BluetoothDevice.ACTION_FOUND)
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
-
-        registerReceiver(bluetoothReceiver, filter)
+        }
     }
 
-    override fun onPause() {
-//        binding.recevie.visibility = View.GONE
-//        binding.bottomBar.visibility = View.GONE
-        super.onPause()
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    override fun onStart() {
+        super.onStart()
+        val filter = IntentFilter().apply {
+            addAction(BluetoothLeService.ACTION_DEVICE_FOUND)
+            addAction(BluetoothLeService.ACTION_STATUS)
+            addAction(BluetoothLeService.ACTION_DATA)
+        }
+        registerReceiver(bleReceiver, filter)
+    }
+
+    override fun onStop() {
+        super.onStop()
         try {
-            unregisterReceiver(bluetoothReceiver)
-        } catch (_: Exception) {}
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        try {
-            bluetoothSocket?.close()
+            unregisterReceiver(bleReceiver)
         } catch (_: Exception) {}
     }
 
@@ -646,6 +534,15 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
+        if (requestCode == REQ_ENABLE_BT) {
+            if (resultCode == RESULT_OK) {
+                startBleScan()
+            } else {
+                Toast.makeText(this, "Bluetooth required to scan", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
+
         if (requestCode == CAMERA_REQ && resultCode == RESULT_OK) {
             // Your existing camera code (keep it if needed)
             val bitmap = data?.extras?.get("data") as? Bitmap
@@ -660,72 +557,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             return
         }
 
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
-            val uri = data.data ?: return
-
-            Thread {
-                try {
-                    val input = contentResolver.openInputStream(uri) ?: throw IOException("Cannot open stream")
-                    val fileBytes = input.readBytes()
-                    input.close()
-
-                    if (fileBytes.isEmpty()) {
-                        runOnUiThread { Toast.makeText(this, "Empty file", Toast.LENGTH_SHORT).show() }
-                        return@Thread
-                    }
-
-                    val os = bluetoothSocket?.outputStream ?: throw IOException("No output stream")
-
-                    // Optional: Send simple header (4 bytes length + 1 byte type: 1=image, 2=video)
-                    val fileSize = fileBytes.size
-                    val header = byteArrayOf(
-                        (fileSize shr 24).toByte(),
-                        (fileSize shr 16).toByte(),
-                        (fileSize shr 8).toByte(),
-                        fileSize.toByte(),
-                        1.toByte()  // 1 = image (you can change to 2 for video if needed)
-                    )
-                    os.write(header)
-
-                    // Send file in chunks (safe for large files)
-                    val chunkSize = 4096  // 4KB chunks – adjust if needed
-                    var bytesSent = 0
-
-                    runOnUiThread {
-                        Toast.makeText(this, "Sending ${fileBytes.size / 1024} KB...", Toast.LENGTH_SHORT).show()
-                    }
-
-                    while (bytesSent < fileBytes.size) {
-                        val remaining = fileBytes.size - bytesSent
-                        val sizeThisTime = minOf(chunkSize, remaining)
-
-                        os.write(fileBytes, bytesSent, sizeThisTime)
-                        os.flush()  // important after each chunk
-
-                        bytesSent += sizeThisTime
-
-                        // Optional: show progress (add a ProgressBar if you want)
-                        val percent = (bytesSent * 100 / fileBytes.size)
-                        runOnUiThread {
-                            binding.tvStatuss.text = "Sending... $percent%"
-                        }
-                    }
-
-                    os.flush()
-
-                    runOnUiThread {
-                        Toast.makeText(this, "File sent successfully (${fileBytes.size} bytes)", Toast.LENGTH_LONG).show()
-                        binding.tvStatuss.text = "Ready to receive"
-                    }
-
-                } catch (e: Exception) {
-                    runOnUiThread {
-                        Toast.makeText(this, "Send failed: ${e.message}", Toast.LENGTH_LONG).show()
-                        Log.e("BluetoothSend", "Error sending file", e)
-                    }
-                }
-            }.start()
-        }
     }
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
@@ -927,6 +758,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         return mutableBitmap
     }
 
+    @SuppressLint("MissingPermission")
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -937,7 +769,11 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             if (grantResults.isNotEmpty() &&
                 grantResults.all { it == PackageManager.PERMISSION_GRANTED }
             ) {
-                startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                if (bluetoothAdapter?.isEnabled == true) {
+                    startBleScan()
+                } else {
+                    startActivityForResult(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), REQ_ENABLE_BT)
+                }
             } else {
                 Toast.makeText(this, "Bluetooth Permission Required!", Toast.LENGTH_SHORT).show()
             }
@@ -954,28 +790,4 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         }
     }
 
-    private fun sendTextMessage(message: String) {
-
-        if (!isBluetoothConnected || outputStream == null) {
-            Toast.makeText(this, "Not connected", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        Thread {
-            try {
-                val messageWithEnd = message + "\n"   // newline important
-                outputStream?.write(messageWithEnd.toByteArray())
-                outputStream?.flush()
-
-                runOnUiThread {
-                    binding.tvStatuss.text = "Sent: $message"
-                }
-
-            } catch (e: Exception) {
-                runOnUiThread {
-                    Toast.makeText(this, "Send failed: ${e.message}", Toast.LENGTH_LONG).show()
-                }
-            }
-        }.start()
-    }
 }

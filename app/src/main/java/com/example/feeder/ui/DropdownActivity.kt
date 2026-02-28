@@ -1,5 +1,6 @@
 package com.example.feeder.ui
 import SubstationRepository
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
@@ -7,6 +8,7 @@ import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
@@ -193,12 +195,14 @@ class DropdownActivity : AppCompatActivity() {
 
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun setupSubstationDropdown(list: List<String>) {
         val adapter = ArrayAdapter(
             this,
-            android.R.layout.simple_dropdown_item_1line,
+            R.layout.custom_dropdown,
             list
         )
+        adapter.setDropDownViewResource(R.layout.custom_dropdown)
         binding.substation.apply {
             setAdapter(adapter)
             threshold = 0
@@ -217,12 +221,14 @@ class DropdownActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun setupFeederDropdown(list: List<String>) {
         val adapter = ArrayAdapter(
             this,
-            android.R.layout.simple_dropdown_item_1line,
+            R.layout.custom_dropdown,
             list
         )
+        adapter.setDropDownViewResource(R.layout.custom_dropdown)
 
         binding.feederIdSpin.apply {
             setAdapter(adapter)
@@ -242,13 +248,15 @@ class DropdownActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun setupDtNameDropdown(list: List<String>) {
 
         val adapter = ArrayAdapter(
             this,
-            android.R.layout.simple_dropdown_item_1line,
+            R.layout.custom_dropdown,
             list
         )
+        adapter.setDropDownViewResource(R.layout.custom_dropdown)
 
         binding.dtname.apply {
             setAdapter(adapter)
