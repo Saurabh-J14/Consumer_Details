@@ -11,14 +11,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -28,11 +26,9 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import com.example.feeder.R
 import com.example.feeder.data.remote.RetrofitClient
 import com.example.feeder.databinding.ActivityConsumerDetailsBinding
@@ -41,7 +37,6 @@ import com.example.feeder.ui.base.ConsumerUpdateViewModelFactory
 import com.example.feeder.ui.viewModel.ConsumerUpdateViewModel
 import com.example.feeder.utils.FusedLocationTracker
 import com.example.feeder.utils.PrefManager
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -59,8 +54,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private var capturedBitmap: Bitmap? = null
     private var openCameraAfterLocation = false
     private lateinit var fusedLocationClient: FusedLocationTracker
-    private var currentPhotoPath: String? = null
-    private var currentPhotoUri: android.net.Uri? = null
+
 
     private var bluetoothAdapter: BluetoothAdapter? = null
     private val deviceAddresses = mutableListOf<String>()
