@@ -10,9 +10,17 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.text.TextUtils
 import android.util.Log
@@ -20,9 +28,11 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.example.feeder.R
 import com.example.feeder.data.remote.RetrofitClient
 import com.example.feeder.databinding.ActivityConsumerDetailsBinding
@@ -37,7 +47,7 @@ import java.util.*
 
 class ConsumerDetailsActivity : AppCompatActivity() {
 
-    companion object { private const val TAG = "ConsumerDetailsActivity" }
+    companion object { private const val TAG = "BLE Connectivity" }
     private lateinit var binding: ActivityConsumerDetailsBinding
     private lateinit var prefManager: PrefManager
     private val BT_PERMISSION_REQ = 1010
@@ -49,15 +59,23 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private var capturedBitmap: Bitmap? = null
     private var openCameraAfterLocation = false
     private lateinit var fusedLocationClient: FusedLocationTracker
+    private var currentPhotoPath: String? = null
+    private var currentPhotoUri: android.net.Uri? = null
 
     private var bluetoothAdapter: BluetoothAdapter? = null
     private val deviceAddresses = mutableListOf<String>()
     private val deviceLabels = mutableListOf<String>()
     private lateinit var deviceAdapter: ArrayAdapter<String>
     private var isScanning = false
+    private val notifyList = mutableListOf<String>()
+    private val notifyLabels = mutableListOf<String>()
+    private lateinit var notifyAdapter: ArrayAdapter<String>
+    private val scanHandler = Handler(Looper.getMainLooper())
+    private val scanTimeoutMs = 60_000L
+    private val stopScanRunnable = Runnable {
+        if (isScanning) stopBleScan()
+    }
 
-//    private val sppUUID: UUID =
-//        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 
     private val viewModel: ConsumerUpdateViewModel by viewModels {
         ConsumerUpdateViewModelFactory(ConsumerUpdateRepository(RetrofitClient.getServices()))
@@ -107,15 +125,21 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             }
         })
     }
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission", "ClickableViewAccessibility")
     private fun setupBleUi() {
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 
         deviceAdapter = ArrayAdapter(this, R.layout.item_ble_device, R.id.tvBleDevice, deviceLabels)
+        notifyAdapter = ArrayAdapter(this, R.layout.item_ble_device, R.id.tvBleDevice, notifyLabels)
 
         binding.listDevices.adapter = deviceAdapter
         binding.listDevices.setOnTouchListener { v, _ ->
+            v.parent.requestDisallowInterceptTouchEvent(true)
+            false
+        }
+        binding.listCharacteristics.adapter = notifyAdapter
+        binding.listCharacteristics.setOnTouchListener { v, _ ->
             v.parent.requestDisallowInterceptTouchEvent(true)
             false
         }
@@ -147,17 +171,36 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             val address = deviceAddresses.getOrNull(position) ?: return@setOnItemClickListener
             connectToBleDevice(address)
         }
+        binding.listCharacteristics.setOnItemClickListener { _, _, position, _ ->
+            val entry = notifyList.getOrNull(position) ?: return@setOnItemClickListener
+            val parts = entry.split("|")
+            val service = parts.getOrNull(0)
+            val ch = parts.getOrNull(1)
+            if (service.isNullOrBlank() || ch.isNullOrBlank()) {
+                Toast.makeText(this, "Invalid characteristic", Toast.LENGTH_SHORT).show()
+            } else {
+                binding.tvBleCharStatus.text = "Status: Subscribing..."
+                subscribeToCharacteristic(service, ch)
+            }
+        }
+        refreshPairedDevices()
     }
 
     private fun startBleScan() {
         deviceAddresses.clear()
         deviceLabels.clear()
+        notifyList.clear()
+        notifyLabels.clear()
         deviceAdapter.notifyDataSetChanged()
+        notifyAdapter.notifyDataSetChanged()
         binding.listDevices.visibility = View.VISIBLE
+        binding.listCharacteristics.visibility = View.GONE
         binding.tvBleStatus.text = "Status: Scanning..."
         binding.btnBluetooth.text = "Stop Scan"
         isScanning = true
         startBleService(BluetoothLeService.ACTION_START_SCAN)
+        scanHandler.removeCallbacks(stopScanRunnable)
+        scanHandler.postDelayed(stopScanRunnable, scanTimeoutMs)
     }
 
     private fun stopBleScan() {
@@ -165,6 +208,32 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         binding.btnBluetooth.text = "Scan BLE Devices"
         isScanning = false
         startBleService(BluetoothLeService.ACTION_STOP_SCAN)
+        scanHandler.removeCallbacks(stopScanRunnable)
+    }
+
+
+    @SuppressLint("MissingPermission")
+    private fun refreshPairedDevices() {
+        if (bluetoothAdapter == null) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(
+                    this@ConsumerDetailsActivity,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+        }
+        val bonded = bluetoothAdapter?.bondedDevices ?: emptySet()
+        for (device in bonded) {
+            val address = device.address
+            val name = device.name ?: "Unknown"
+            if (!deviceAddresses.contains(address)) {
+                deviceAddresses.add(address)
+                deviceLabels.add("Paired: $name\n$address")
+                deviceAdapter.notifyDataSetChanged()
+            }
+        }
     }
 
     private fun connectToBleDevice(address: String) {
@@ -215,9 +284,35 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         return true
     }
 
+    private fun subscribeToCharacteristic(serviceUuid: String, charUuid: String) {
+        val intent = Intent(this, BluetoothLeService::class.java).apply {
+            action = BluetoothLeService.ACTION_SUBSCRIBE_CHAR
+            putExtra(BluetoothLeService.EXTRA_SERVICE_UUID, serviceUuid)
+            putExtra(BluetoothLeService.EXTRA_CHAR_UUID, charUuid)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+
+
+
     private val bleReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
+                BluetoothAdapter.ACTION_STATE_CHANGED -> {
+                    val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
+                    if (state == BluetoothAdapter.STATE_ON) {
+                        if (ensureBlePermissions() && !isScanning) {
+                            startBleScan()
+                        }
+                    } else if (state == BluetoothAdapter.STATE_OFF) {
+                        binding.tvBleStatus.text = "Status: Bluetooth OFF"
+                        binding.tvBleCharStatus.text = "Status: Idle"
+                    }
+                }
                 BluetoothLeService.ACTION_DEVICE_FOUND -> {
                     val name = intent.getStringExtra(BluetoothLeService.EXTRA_DEVICE_NAME) ?: "Unknown"
                     val address = intent.getStringExtra(BluetoothLeService.EXTRA_DEVICE_ADDRESS) ?: return
@@ -228,8 +323,49 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                         Log.d(TAG, "BLE device found: name=$name, address=$address")
                     }
                 }
+                BluetoothLeService.ACTION_NOTIFY_LIST -> {
+                    val list = intent.getStringArrayListExtra(BluetoothLeService.EXTRA_NOTIFY_LIST)
+                    notifyList.clear()
+                    notifyLabels.clear()
+                    if (!list.isNullOrEmpty()) {
+                        notifyList.addAll(list)
+                        for (entry in list) {
+                            val parts = entry.split("|")
+                            val service = parts.getOrNull(0) ?: "?"
+                            val ch = parts.getOrNull(1) ?: "?"
+                            notifyLabels.add("Char: $ch\nService: $service")
+                        }
+                        notifyAdapter.notifyDataSetChanged()
+                        binding.listCharacteristics.visibility = View.VISIBLE
+                        binding.tvBleCharStatus.text = "Status: Select one"
+                        Log.d(TAG, "Notify characteristics: ${notifyList.size}")
+                        Toast.makeText(
+                            this@ConsumerDetailsActivity,
+                            "Found ${notifyList.size} characteristics",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        Log.d(TAG, "Notify characteristics: none")
+                        notifyAdapter.notifyDataSetChanged()
+                        binding.listCharacteristics.visibility = View.GONE
+                        binding.tvBleCharStatus.text = "Status: None"
+                        Toast.makeText(
+                            this@ConsumerDetailsActivity,
+                            "No notify characteristics found",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
                 BluetoothLeService.ACTION_STATUS -> {
                     val status = intent.getStringExtra(BluetoothLeService.EXTRA_STATUS) ?: ""
+                    val isCharStatus = status.startsWith("Subscribed") ||
+                        status.startsWith("Characteristic") ||
+                        status.startsWith("Service not found") ||
+                        status.startsWith("Select characteristic")
+                    if (isCharStatus) {
+                        binding.tvBleCharStatus.text = "Status: $status"
+                        return
+                    }
                     if (status.startsWith("Connected")) {
                         Log.d(TAG, "BLE connected: $status")
                     }
@@ -257,46 +393,18 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                         Log.d(TAG, "BLE data bytes (first 256 bytes hex): $hex")
                     }
                     binding.tvBleStatus.text = "Status: Receiving data..."
+                    val hexPreview = bytes?.joinToString(" ") { "%02X".format(it) } ?: "-"
+                    val textDisplay = text ?: bytes?.toString(Charsets.UTF_8) ?: "-"
+                    val display = "Text:\n$textDisplay\n\nHex:\n$hexPreview"
                     when (type) {
-                        BluetoothLeService.DATA_TYPE_IMAGE -> {
-                            if (bytes != null) {
-                                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                                binding.imgBleData.visibility = View.VISIBLE
-                                binding.imgBleData.setImageBitmap(bitmap)
-                                binding.tvBleData.text = "Image received (${bytes.size} bytes)"
-                            }
-                        }
-                        BluetoothLeService.DATA_TYPE_FILE -> {
-                            val name = intent.getStringExtra(BluetoothLeService.EXTRA_FILE_NAME) ?: "file"
-                            val mime = intent.getStringExtra(BluetoothLeService.EXTRA_FILE_MIME) ?: "application/octet-stream"
-                            val path = intent.getStringExtra(BluetoothLeService.EXTRA_FILE_PATH) ?: ""
-                            val size = intent.getLongExtra(BluetoothLeService.EXTRA_FILE_SIZE, 0L)
-
-                            binding.imgBleData.visibility = View.GONE
-
-                            if (mime == "text/plain" || name.endsWith(".txt", true)) {
-                                val content = runCatching {
-                                    File(path).readText(Charsets.UTF_8)
-                                }.getOrNull()
-                                val preview = content?.take(8000) ?: "Unable to read text"
-                                binding.tvBleData.text = "TXT: $name (${size} bytes)\n$preview"
-                            } else if (mime == "application/pdf" || name.endsWith(".pdf", true)) {
-                                binding.tvBleData.text = "PDF received: $name (${size} bytes)\nSaved at: $path"
-                            } else {
-                                binding.tvBleData.text = "File received: $name (${size} bytes)\nSaved at: $path"
-                            }
-                        }
                         BluetoothLeService.DATA_TYPE_JSON -> {
-                            binding.imgBleData.visibility = View.GONE
-                            binding.tvBleData.text = text ?: "JSON received"
+                            binding.tvBleData.text = display
                         }
                         BluetoothLeService.DATA_TYPE_TEXT -> {
-                            binding.imgBleData.visibility = View.GONE
-                            binding.tvBleData.text = text ?: "Text received"
+                            binding.tvBleData.text = display
                         }
                         else -> {
-                            binding.imgBleData.visibility = View.GONE
-                            binding.tvBleData.text = text ?: "Binary data received"
+                            binding.tvBleData.text = display
                         }
                     }
                 }
@@ -308,11 +416,22 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         val filter = IntentFilter().apply {
+            addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
             addAction(BluetoothLeService.ACTION_DEVICE_FOUND)
+            addAction(BluetoothLeService.ACTION_NOTIFY_LIST)
             addAction(BluetoothLeService.ACTION_STATUS)
             addAction(BluetoothLeService.ACTION_DATA)
         }
-        registerReceiver(bleReceiver, filter)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(bleReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(bleReceiver, filter)
+        }
+        refreshPairedDevices()
+    }
+
+    override fun onResume() {
+        super.onResume()
     }
 
     override fun onStop() {
@@ -515,21 +634,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         fetchLocation()
     }
 
-//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-//        super.onActivityResult(requestCode, resultCode, data)
-//
-//        if (requestCode == CAMERA_REQ && resultCode == RESULT_OK) {
-//            val bitmap = data?.extras?.get("data") as? Bitmap
-//            if (bitmap != null) {
-//                val finalBitmap = drawTextOnBitmap(bitmap)
-//                capturedBitmap = finalBitmap
-//                binding.imgPhoto.visibility = View.VISIBLE
-//                binding.imgPhoto.setImageBitmap(finalBitmap)
-//            } else {
-//                Toast.makeText(this, "Image capture failed", Toast.LENGTH_SHORT).show()
-//            }
-//        }
-//    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -615,7 +719,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
         viewModel.updateResponse.observe(this) { res ->
             if (res != null) {
-                showToast("✅ Updated Successfully")
+                showToast("? Updated Successfully")
                 finish()
             } else {
                 showToast("Update failed! No response from server")
@@ -649,9 +753,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         binding.etcircleName.setText(intent.getStringExtra("circleName") ?: "-")
         binding.etphases.setText(intent.getStringExtra("phase") ?: "-")
         binding.etvoltage.setText(intent.extras?.get("voltage")?.toString() ?: "-")
-//        binding.etsanctionedload.setText(intent.extras?.get("sanctionedLoad")?.toString() ?: "-")
-//        binding.etregionName.setText(intent.getStringExtra("regionName") ?: "-")
-//        binding.textzone.setText(intent.getStringExtra("zoneName") ?: "-")
         binding.etconsumerNumber.setText(intent.getStringExtra("consumerStatus") ?: "-")
         binding.txtCreated.setText(intent.getStringExtra("createdOn") ?: "-")
         binding.etfeedr.setText(intent.extras?.get("feederId")?.toString() ?: "-")
@@ -715,8 +816,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
             val address = fusedLocationClient.getAddressLine()
 
-            binding.consumerlocation.text =
-                address ?: "Lat: $latitude, Lng: $longitude"
+            binding.consumerlocation.text = address ?: "Lat: $latitude, Lng: $longitude"
 
             if (openCameraAfterLocation) {
                 openCameraAfterLocation = false
@@ -730,8 +830,8 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         val canvas = Canvas(mutableBitmap)
 
         val density = resources.displayMetrics.density
-        val textSizePx = 12f * density
-        val padding = 12f * density
+        val textSizePx = 4f * density
+        val padding = 3f * density
 
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
@@ -744,8 +844,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             style = Paint.Style.FILL
         }
 
-        val dateTime = SimpleDateFormat("dd-MM-yyyy  hh:mm a  EEEE", Locale.getDefault())
-            .format(Date())
+        val dateTime = SimpleDateFormat("dd-MM-yyyy  hh:mm a  EEEE", Locale.getDefault()).format(Date())
         val locationText = "Lat: $latitude , Lng: $longitude"
 
         val yDate = mutableBitmap.height - (textSizePx * 2)

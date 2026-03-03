@@ -100,6 +100,7 @@ class DashBoardFragment : Fragment() {
         binding.swipeLayout.setOnRefreshListener {
             loadCounts()
             loadTotalConsumers()
+            loadPendingCount()
         }
 
         binding.consumerUpdate.setOnClickListener {
