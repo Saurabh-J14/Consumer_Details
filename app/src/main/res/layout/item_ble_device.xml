@@ -4,11 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:drawableStart="@drawable/ic_bluetooth"
-    android:drawableTint="@color/blue"
-    android:drawablePadding="8dp"
+    android:drawablePadding="12dp"
     android:ellipsize="end"
     android:maxLines="2"
-    android:paddingHorizontal="4dp"
-    android:paddingVertical="6dp"
+    android:paddingHorizontal="12dp"
+    android:paddingVertical="10dp"
     android:textColor="@color/black"
-    android:textSize="12sp" />
+    android:textSize="14sp" />

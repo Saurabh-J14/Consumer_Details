@@ -44,6 +44,8 @@ class BluetoothLeService : Service() {
         const val ACTION_DEVICE_FOUND = "com.example.feeder.action.DEVICE_FOUND"
         const val ACTION_STATUS = "com.example.feeder.action.STATUS"
         const val ACTION_DATA = "com.example.feeder.action.DATA"
+        const val ACTION_NOTIFY_LIST = "com.example.feeder.action.NOTIFY_LIST"
+        const val ACTION_SUBSCRIBE_CHAR = "com.example.feeder.action.SUBSCRIBE_CHAR"
 
         const val EXTRA_DEVICE_ADDRESS = "extra_device_address"
         const val EXTRA_DEVICE_NAME = "extra_device_name"
@@ -51,10 +53,12 @@ class BluetoothLeService : Service() {
         const val EXTRA_DATA_TYPE = "extra_data_type"
         const val EXTRA_DATA_TEXT = "extra_data_text"
         const val EXTRA_DATA_BYTES = "extra_data_bytes"
+        const val EXTRA_NOTIFY_LIST = "extra_notify_list"
+        const val EXTRA_SERVICE_UUID = "extra_service_uuid"
+        const val EXTRA_CHAR_UUID = "extra_char_uuid"
 
         const val DATA_TYPE_TEXT = "text"
         const val DATA_TYPE_JSON = "json"
-        const val DATA_TYPE_IMAGE = "image"
         const val DATA_TYPE_BINARY = "binary"
         const val DATA_TYPE_FILE = "file"
 
@@ -78,7 +82,6 @@ class BluetoothLeService : Service() {
     private var bluetoothGatt: BluetoothGatt? = null
     private var connectedDeviceName: String? = null
 
-    private var imageBuffer: StringBuilder? = null
     private val lineBuffer = StringBuilder()
     private var isReceivingFile = false
     private var fileName: String? = null
@@ -113,6 +116,15 @@ class BluetoothLeService : Service() {
                 }
             }
             ACTION_DISCONNECT -> disconnect()
+            ACTION_SUBSCRIBE_CHAR -> {
+                val serviceUuid = intent.getStringExtra(EXTRA_SERVICE_UUID)
+                val charUuid = intent.getStringExtra(EXTRA_CHAR_UUID)
+                if (serviceUuid.isNullOrBlank() || charUuid.isNullOrBlank()) {
+                    sendStatus("Characteristic UUID missing")
+                } else {
+                    subscribeCharacteristic(serviceUuid, charUuid)
+                }
+            }
         }
         return START_STICKY
     }
@@ -297,13 +309,13 @@ class BluetoothLeService : Service() {
             if (nameChar != null) {
                 gatt.readCharacteristic(nameChar)
             }
-            val notifyChar = findNotifyCharacteristic(gatt)
-            if (notifyChar == null) {
-                sendStatus("No notify characteristic found")
+            val notifyList = collectNotifyCharacteristics(gatt)
+            if (notifyList.isEmpty()) {
+                sendStatus("No notify/indicate characteristic found")
                 return
             }
-            enableNotifications(gatt, notifyChar)
-            sendStatus("Listening for data...")
+            sendNotifyList(notifyList)
+            sendStatus("Select characteristic to subscribe")
         }
 
         override fun onCharacteristicRead(
@@ -332,20 +344,6 @@ class BluetoothLeService : Service() {
         }
     }
 
-    private fun findNotifyCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
-        for (service in gatt.services) {
-            for (ch in service.characteristics) {
-                val props = ch.properties
-                val isNotify = (props and BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0
-                val isIndicate = (props and BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0
-                if (isNotify || isIndicate) {
-                    return ch
-                }
-            }
-        }
-        return null
-    }
-
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun enableNotifications(gatt: BluetoothGatt, ch: BluetoothGattCharacteristic) {
         val props = ch.properties
@@ -363,29 +361,27 @@ class BluetoothLeService : Service() {
         }
     }
 
+    private fun collectNotifyCharacteristics(gatt: BluetoothGatt): List<String> {
+        val list = mutableListOf<String>()
+        for (service in gatt.services) {
+            for (ch in service.characteristics) {
+                val props = ch.properties
+                val isNotify = (props and BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0
+                val isIndicate = (props and BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0
+                if (isNotify || isIndicate) {
+                    list.add("${service.uuid}|${ch.uuid}")
+                }
+            }
+        }
+        return list
+    }
+
     private fun handleIncomingData(bytes: ByteArray) {
         val text = bytes.toString(Charsets.UTF_8)
 
         if (text.contains("FILE_BEGIN:") || text.contains("FILE_CHUNK:") || text.contains("FILE_END") || isReceivingFile) {
             handleFileProtocol(text)
             return
-        }
-
-        if (text.startsWith("IMG:") || imageBuffer != null) {
-            val chunk = if (text.startsWith("IMG:")) text.removePrefix("IMG:") else text
-            val buffer = imageBuffer ?: StringBuilder()
-            buffer.append(chunk)
-            imageBuffer = buffer
-
-            try {
-                val decoded = Base64.decode(buffer.toString(), Base64.DEFAULT)
-                imageBuffer = null
-                sendData(DATA_TYPE_IMAGE, null, decoded)
-                return
-            } catch (_: IllegalArgumentException) {
-                sendStatus("Receiving image...")
-                return
-            }
         }
 
         if (text.startsWith("JSON:")) {
@@ -526,6 +522,28 @@ class BluetoothLeService : Service() {
         if (text != null) intent.putExtra(EXTRA_DATA_TEXT, text)
         if (bytes != null) intent.putExtra(EXTRA_DATA_BYTES, bytes)
         sendBroadcast(intent)
+    }
+
+    private fun sendNotifyList(list: List<String>) {
+        val intent = Intent(ACTION_NOTIFY_LIST)
+            .setPackage(packageName)
+            .putStringArrayListExtra(EXTRA_NOTIFY_LIST, ArrayList(list))
+        sendBroadcast(intent)
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    private fun subscribeCharacteristic(serviceUuid: String, charUuid: String) {
+        val gatt = bluetoothGatt ?: return
+        val service = gatt.getService(UUID.fromString(serviceUuid)) ?: run {
+            sendStatus("Service not found")
+            return
+        }
+        val characteristic = service.getCharacteristic(UUID.fromString(charUuid)) ?: run {
+            sendStatus("Characteristic not found")
+            return
+        }
+        enableNotifications(gatt, characteristic)
+        sendStatus("Subscribed to $charUuid")
     }
 
     private fun sendFileData(name: String, mime: String, path: String, size: Long) {

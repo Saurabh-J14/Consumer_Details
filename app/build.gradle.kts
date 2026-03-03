@@ -50,6 +50,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0")
+    implementation("androidx.documentfile:documentfile:1.0.1")
     implementation(libs.androidx.activity)
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")

@@ -220,32 +220,6 @@
                         android:textColor="@color/black"/>
                 </LinearLayout>
 
-                <!--                <LinearLayout-->
-                <!--                    android:layout_width="match_parent"-->
-                <!--                    android:layout_height="wrap_content"-->
-                <!--                    android:orientation="horizontal"-->
-                <!--                    android:layout_marginVertical="4dp">-->
-
-                <!--                    <TextView-->
-                <!--                        android:layout_width="0dp"-->
-                <!--                        android:layout_height="wrap_content"-->
-                <!--                        android:layout_weight="1"-->
-                <!--                        android:text="Region"-->
-                <!--                        android:textStyle="bold"-->
-                <!--                        android:textSize="11sp"-->
-                <!--                        android:textColor="@color/black"/>-->
-
-                <!--                    <EditText-->
-                <!--                        android:id="@+id/etregion_name"-->
-                <!--                        android:layout_width="0dp"-->
-                <!--                        android:layout_height="wrap_content"-->
-                <!--                        android:layout_weight="2"-->
-                <!--                        android:background="@drawable/tv_background"-->
-                <!--                        android:hint="Region"-->
-                <!--                        android:padding="5dp"-->
-                <!--                        android:textSize="11sp"/>-->
-                <!--                </LinearLayout>-->
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -353,33 +327,6 @@
                         android:textColor="@color/black"
                         android:textSize="11sp"/>
                 </LinearLayout>
-
-                <!--                <LinearLayout-->
-                <!--                    android:layout_width="match_parent"-->
-                <!--                    android:layout_height="wrap_content"-->
-                <!--                    android:orientation="horizontal"-->
-                <!--                    android:layout_marginVertical="4dp">-->
-
-                <!--                    <TextView-->
-                <!--                        android:layout_width="0dp"-->
-                <!--                        android:layout_height="wrap_content"-->
-                <!--                        android:layout_weight="1"-->
-                <!--                        android:text="Zone Name"-->
-                <!--                        android:textStyle="bold"-->
-                <!--                        android:textColor="@color/black"-->
-                <!--                        android:textSize="11sp"/>-->
-
-                <!--                    <TextView-->
-                <!--                        android:id="@+id/textzone"-->
-                <!--                        android:layout_width="0dp"-->
-                <!--                        android:layout_height="wrap_content"-->
-                <!--                        android:layout_weight="2"-->
-                <!--                        android:background="@drawable/tv_background"-->
-                <!--                        android:padding="5dp"-->
-                <!--                        android:hint="Zone Name"-->
-                <!--                        android:textColor="@color/black"-->
-                <!--                        android:textSize="11sp"/>-->
-                <!--                </LinearLayout>-->
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -656,6 +603,38 @@
                             android:visibility="gone"/>
 
                         <TextView
+                            android:id="@+id/tvBleCharTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginTop="10dp"
+                            android:text="Characteristics"
+                            android:textStyle="bold"
+                            android:textSize="12sp"
+                            android:textColor="@color/black" />
+
+                        <TextView
+                            android:id="@+id/tvBleCharStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginTop="2dp"
+                            android:text="Status: Idle"
+                            android:textStyle="bold"
+                            android:textSize="12sp"
+                            android:textColor="@color/black" />
+
+                        <ListView
+                            android:id="@+id/listCharacteristics"
+                            android:layout_width="match_parent"
+                            android:layout_height="220dp"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginEnd="20dp"
+                            android:layout_marginTop="6dp"
+                            android:scrollbars="vertical"
+                            android:visibility="gone"/>
+
+                        <TextView
                             android:id="@+id/tvBleDataLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -679,15 +658,6 @@
                             android:textSize="12sp"
                             android:textColor="@color/black" />
 
-                        <ImageView
-                            android:id="@+id/imgBleData"
-                            android:layout_width="match_parent"
-                            android:layout_height="200dp"
-                            android:layout_marginStart="20dp"
-                            android:layout_marginEnd="20dp"
-                            android:layout_marginTop="8dp"
-                            android:scaleType="centerCrop"
-                            android:visibility="gone" />
                     </LinearLayout>
 
                 <LinearLayout
@@ -883,10 +853,11 @@
 
                     <ImageView
                         android:id="@+id/imgPhoto"
-                        android:layout_width="220dp"
+                        android:layout_width="match_parent"
                         android:layout_height="220dp"
                         android:layout_marginTop="20dp"
-                        android:scaleType="centerCrop"
+                        android:layout_marginHorizontal="12dp"
+                        android:scaleType="fitXY"
                         android:visibility="gone"/>
                 </LinearLayout>
 
