@@ -71,30 +71,24 @@
         app:layout_constraintTop_toBottomOf="@id/headerView"
         app:layout_constraintVertical_bias="0.0">
 
-        <ScrollView
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:isScrollContainer="true"
-            android:scrollbars="none"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior"
-            tools:ignore="UselessParent">
+            android:layout_height="match_parent">
 
             <LinearLayout
                 android:id="@+id/dashBoardLayout"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:visibility="visible">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                android:visibility="visible"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="40dp"
+                        android:layout_marginTop="6dp"
                         android:gravity="center"
                         android:orientation="horizontal"
                         android:padding="1dp"
@@ -109,8 +103,8 @@
 
                             <com.google.android.material.card.MaterialCardView
                                 android:id="@+id/consumerUpdate"
-                                android:layout_width="110dp"
-                                android:layout_height="110dp"
+                                android:layout_width="100dp"
+                                android:layout_height="100dp"
                                 android:layout_margin="6dp"
                                 app:cardCornerRadius="60dp"
                                 app:cardElevation="8dp"
@@ -139,7 +133,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
+                                android:layout_marginTop="2dp"
                                 android:text="Total Count"
                                 android:textColor="@color/black"
                                 android:textSize="12sp"
@@ -156,8 +150,8 @@
 
                             <com.google.android.material.card.MaterialCardView
                                 android:id="@+id/totalCounts"
-                                android:layout_width="110dp"
-                                android:layout_height="110dp"
+                                android:layout_width="100dp"
+                                android:layout_height="100dp"
                                 android:layout_margin="6dp"
                                 app:cardCornerRadius="60dp"
                                 app:cardElevation="8dp"
@@ -185,7 +179,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
+                                android:layout_marginTop="2dp"
                                 android:text="@string/total_complete"
                                 android:textColor="@color/black"
                                 android:textSize="12sp"
@@ -202,8 +196,8 @@
 
                             <com.google.android.material.card.MaterialCardView
                                 android:id="@+id/totalPending"
-                                android:layout_width="110dp"
-                                android:layout_height="110dp"
+                                android:layout_width="100dp"
+                                android:layout_height="100dp"
                                 android:layout_margin="6dp"
                                 app:cardCornerRadius="60dp"
                                 app:cardElevation="8dp"
@@ -232,7 +226,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
+                                android:layout_marginTop="2dp"
                                 android:text="Total Pending"
                                 android:textColor="@color/black"
                                 android:textSize="12sp"
@@ -242,19 +236,22 @@
 
                     </LinearLayout>
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvConsumerList"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
-                        android:background="@drawable/btn_rounded"
-                        android:visibility="gone" />
-
-                </LinearLayout>
-
             </LinearLayout>
 
-        </ScrollView>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvConsumerList"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="@color/white"
+                android:background="@drawable/btn_rounded"
+                android:visibility="visible"
+                app:layout_constraintTop_toBottomOf="@id/dashBoardLayout"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 

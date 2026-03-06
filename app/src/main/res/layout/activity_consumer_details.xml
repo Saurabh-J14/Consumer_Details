@@ -19,14 +19,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!--        <ImageButton-->
-        <!--            android:id="@+id/imgClose"-->
-        <!--            android:layout_width="match_parent"-->
-        <!--            android:layout_height="wrap_content"-->
-        <!--            android:layout_weight="1.80"-->
-        <!--            android:backgroundTint="@android:color/transparent"-->
-        <!--            android:src="@drawable/ic_back"-->
-        <!--            app:tint="@color/white" />-->
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
@@ -40,7 +32,6 @@
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
     </com.google.android.material.appbar.AppBarLayout>
-    <!-- Shimmer Layout -->
     <com.facebook.shimmer.ShimmerFrameLayout
         android:id="@+id/shimmer_view_container"
         android:layout_width="match_parent"
@@ -56,18 +47,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-
             <include layout="@layout/data_consumer_placeholder" />
-
-            <!--            <include layout="@layout/data_placeholder_layout" />-->
-
-            <!--            <include layout="@layout/data_placeholder_layout" />-->
-
-            <!--            <include layout="@layout/data_placeholder_layout" />-->
-
-            <!--            <include layout="@layout/data_placeholder_layout" />-->
-
-            <!--            <include layout="@layout/data_placeholder_layout" />-->
         </LinearLayout>
     </com.facebook.shimmer.ShimmerFrameLayout>
 
@@ -535,6 +515,49 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/dTransformerLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="4"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="DT"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        android:textSize="11sp"/>
+
+                    <EditText
+                        android:id="@+id/etDt"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="3"
+                        android:background="@drawable/tv_background"
+                        android:hint="DT"
+                        android:textSize="11sp"
+                        android:padding="5dp"
+                        android:textColor="@color/black"
+                        android:layout_marginEnd="5dp"
+                        android:layout_marginStart="50dp"/>
+
+                    <Button
+                        android:id="@+id/btnDT"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:layout_weight="1"
+                        android:text="Check"
+                        android:visibility="gone"
+                        android:textAllCaps="false"
+                        android:textSize="11sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -549,117 +572,14 @@
                         android:textStyle="bold"
                         android:textSize="14sp"
                         android:textAllCaps="false"
+                        android:layout_marginTop="10dp"
                         android:layout_marginStart="20dp"
                         android:layout_marginEnd="20dp"
                         android:textColor="@color/white"/>
 
                 </LinearLayout>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/tvBleTitle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="20dp"
-                            android:text="Bluetooth (BLE)"
-                            android:textStyle="bold"
-                            android:textSize="16sp"
-                            android:textColor="@color/black" />
-
-                        <Button
-                            android:id="@+id/btnBluetooth"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="20dp"
-                            android:layout_marginEnd="20dp"
-                            android:text="Scan BLE Devices"
-                            android:textStyle="bold"
-                            android:textSize="13sp"
-                            android:textAllCaps="false" />
-
-                        <TextView
-                            android:id="@+id/tvBleStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="20dp"
-                            android:layout_marginTop="2dp"
-                            android:text="Status: Idle"
-                            android:textStyle="bold"
-                            android:textSize="12sp"
-                            android:textColor="@color/black" />
-
-                        <ListView
-                            android:id="@+id/listDevices"
-                            android:layout_width="match_parent"
-                            android:layout_height="220dp"
-                            android:layout_marginStart="20dp"
-                            android:layout_marginEnd="20dp"
-                            android:layout_marginTop="8dp"
-                            android:scrollbars="vertical"
-                            android:visibility="gone"/>
-
-                        <TextView
-                            android:id="@+id/tvBleCharTitle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="20dp"
-                            android:layout_marginTop="10dp"
-                            android:text="Characteristics"
-                            android:textStyle="bold"
-                            android:textSize="12sp"
-                            android:textColor="@color/black" />
-
-                        <TextView
-                            android:id="@+id/tvBleCharStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="20dp"
-                            android:layout_marginTop="2dp"
-                            android:text="Status: Idle"
-                            android:textStyle="bold"
-                            android:textSize="12sp"
-                            android:textColor="@color/black" />
-
-                        <ExpandableListView
-                            android:id="@+id/listCharacteristics"
-                            android:layout_width="match_parent"
-                            android:layout_height="220dp"
-                            android:layout_marginStart="20dp"
-                            android:layout_marginEnd="20dp"
-                            android:layout_marginTop="6dp"
-                            android:scrollbars="vertical"
-                            android:visibility="gone"
-                            android:groupIndicator="@null"/>
-
-                        <TextView
-                            android:id="@+id/tvBleDataLabel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="20dp"
-                            android:layout_marginTop="10dp"
-                            android:text="Received Data"
-                            android:textStyle="bold"
-                            android:textSize="14sp"
-                            android:textColor="@color/black" />
-
-                        <TextView
-                            android:id="@+id/tvBleData"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="20dp"
-                            android:layout_marginEnd="20dp"
-                            android:layout_marginTop="6dp"
-                            android:background="@drawable/tv_background"
-                            android:padding="8dp"
-                            android:text="No data"
-                            android:textSize="12sp"
-                            android:textColor="@color/black" />
-
-                    </LinearLayout>
+                    <!-- BLE UI removed; dialogs handle BLE flow -->
 
                 <LinearLayout
                     android:id="@+id/recevie"
@@ -773,31 +693,6 @@
 
                 </LinearLayout>
 
-                <!-- <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="25dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center">
-
-                    <com.example.feeder.custom.Donut3DChartView
-                        android:id="@+id/donutChart"
-                        android:layout_width="250dp"
-                        android:layout_height="250dp"
-                        android:layout_gravity="center"/>
-
-                    <TextView
-                        android:id="@+id/total"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Confrom Phase"
-                        android:textColor="@color/black"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                </LinearLayout>-->
 
                 <LinearLayout
                     android:id="@+id/layoutSpeedometer"
