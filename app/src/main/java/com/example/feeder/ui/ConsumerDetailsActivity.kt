@@ -59,17 +59,14 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private var capturedBitmap: Bitmap? = null
     private var openCameraAfterLocation = false
     private lateinit var fusedLocationClient: FusedLocationTracker
-    private var currentPhotoPath: String? = null
-    private var currentPhotoUri: android.net.Uri? = null
 
     private var bluetoothAdapter: BluetoothAdapter? = null
     private val deviceAddresses = mutableListOf<String>()
     private val deviceLabels = mutableListOf<String>()
     private lateinit var deviceAdapter: ArrayAdapter<String>
     private var isScanning = false
-    private val notifyList = mutableListOf<String>()
-    private val notifyLabels = mutableListOf<String>()
-    private lateinit var notifyAdapter: ArrayAdapter<String>
+    private val serviceGroups = mutableListOf<ServiceGroup>()
+    private lateinit var characteristicAdapter: BleCharTreeAdapter
     private val scanHandler = Handler(Looper.getMainLooper())
     private val scanTimeoutMs = 60_000L
     private val stopScanRunnable = Runnable {
@@ -131,14 +128,14 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 
         deviceAdapter = ArrayAdapter(this, R.layout.item_ble_device, R.id.tvBleDevice, deviceLabels)
-        notifyAdapter = ArrayAdapter(this, R.layout.item_ble_device, R.id.tvBleDevice, notifyLabels)
+        characteristicAdapter = BleCharTreeAdapter(this, serviceGroups)
 
         binding.listDevices.adapter = deviceAdapter
         binding.listDevices.setOnTouchListener { v, _ ->
             v.parent.requestDisallowInterceptTouchEvent(true)
             false
         }
-        binding.listCharacteristics.adapter = notifyAdapter
+        binding.listCharacteristics.setAdapter(characteristicAdapter)
         binding.listCharacteristics.setOnTouchListener { v, _ ->
             v.parent.requestDisallowInterceptTouchEvent(true)
             false
@@ -171,17 +168,30 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             val address = deviceAddresses.getOrNull(position) ?: return@setOnItemClickListener
             connectToBleDevice(address)
         }
-        binding.listCharacteristics.setOnItemClickListener { _, _, position, _ ->
-            val entry = notifyList.getOrNull(position) ?: return@setOnItemClickListener
-            val parts = entry.split("|")
-            val service = parts.getOrNull(0)
-            val ch = parts.getOrNull(1)
-            if (service.isNullOrBlank() || ch.isNullOrBlank()) {
-                Toast.makeText(this, "Invalid characteristic", Toast.LENGTH_SHORT).show()
-            } else {
+        binding.listCharacteristics.setOnChildClickListener { _, _, groupPosition, childPosition, _ ->
+            val item = serviceGroups
+                .getOrNull(groupPosition)
+                ?.chars
+                ?.getOrNull(childPosition)
+                ?: return@setOnChildClickListener true
+            val service = item.serviceUuid
+            val ch = item.charUuid
+            val props = item.properties
+            val canRead = (props and android.bluetooth.BluetoothGattCharacteristic.PROPERTY_READ) != 0
+            val canNotify = (props and android.bluetooth.BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0
+            val canIndicate = (props and android.bluetooth.BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0
+            if (canRead) {
+                binding.tvBleCharStatus.text = "Status: Reading..."
+                readCharacteristic(service, ch)
+            }
+            if (canNotify || canIndicate) {
                 binding.tvBleCharStatus.text = "Status: Subscribing..."
                 subscribeToCharacteristic(service, ch)
             }
+            if (!canRead && !canNotify && !canIndicate) {
+                binding.tvBleCharStatus.text = "Status: Not read/notify/indicate"
+            }
+            true
         }
         refreshPairedDevices()
     }
@@ -189,12 +199,13 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private fun startBleScan() {
         deviceAddresses.clear()
         deviceLabels.clear()
-        notifyList.clear()
-        notifyLabels.clear()
+        serviceGroups.clear()
         deviceAdapter.notifyDataSetChanged()
-        notifyAdapter.notifyDataSetChanged()
+        characteristicAdapter.notifyDataSetChanged()
         binding.listDevices.visibility = View.VISIBLE
         binding.listCharacteristics.visibility = View.GONE
+        binding.tvBleCharStatus.text = "Status: Idle"
+        binding.tvBleData.text = "No data"
         binding.tvBleStatus.text = "Status: Scanning..."
         binding.btnBluetooth.text = "Stop Scan"
         isScanning = true
@@ -227,7 +238,8 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         val bonded = bluetoothAdapter?.bondedDevices ?: emptySet()
         for (device in bonded) {
             val address = device.address
-            val name = device.name ?: "Unknown"
+            val name = device.name?.trim()
+            if (name.isNullOrBlank() || name.equals("Unknown", ignoreCase = true)) continue
             if (!deviceAddresses.contains(address)) {
                 deviceAddresses.add(address)
                 deviceLabels.add("Paired: $name\n$address")
@@ -297,6 +309,19 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         }
     }
 
+    private fun readCharacteristic(serviceUuid: String, charUuid: String) {
+        val intent = Intent(this, BluetoothLeService::class.java).apply {
+            action = BluetoothLeService.ACTION_READ_CHAR
+            putExtra(BluetoothLeService.EXTRA_SERVICE_UUID, serviceUuid)
+            putExtra(BluetoothLeService.EXTRA_CHAR_UUID, charUuid)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+    }
+
 
 
     private val bleReceiver = object : BroadcastReceiver() {
@@ -314,8 +339,9 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                     }
                 }
                 BluetoothLeService.ACTION_DEVICE_FOUND -> {
-                    val name = intent.getStringExtra(BluetoothLeService.EXTRA_DEVICE_NAME) ?: "Unknown"
+                    val name = intent.getStringExtra(BluetoothLeService.EXTRA_DEVICE_NAME)?.trim()
                     val address = intent.getStringExtra(BluetoothLeService.EXTRA_DEVICE_ADDRESS) ?: return
+                    if (name.isNullOrBlank() || name.equals("Unknown", ignoreCase = true)) return
                     if (!deviceAddresses.contains(address)) {
                         deviceAddresses.add(address)
                         deviceLabels.add("$name\n$address")
@@ -325,33 +351,38 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 }
                 BluetoothLeService.ACTION_NOTIFY_LIST -> {
                     val list = intent.getStringArrayListExtra(BluetoothLeService.EXTRA_NOTIFY_LIST)
-                    notifyList.clear()
-                    notifyLabels.clear()
+                    serviceGroups.clear()
                     if (!list.isNullOrEmpty()) {
-                        notifyList.addAll(list)
+                        val map = LinkedHashMap<String, MutableList<CharItem>>()
                         for (entry in list) {
                             val parts = entry.split("|")
-                            val service = parts.getOrNull(0) ?: "?"
-                            val ch = parts.getOrNull(1) ?: "?"
-                            notifyLabels.add("Char: $ch\nService: $service")
+                            val service = parts.getOrNull(0) ?: continue
+                            val ch = parts.getOrNull(1) ?: continue
+                            val props = parts.getOrNull(2)?.toIntOrNull() ?: 0
+                            val listForService = map.getOrPut(service) { mutableListOf() }
+                            listForService.add(CharItem(service, ch, props))
                         }
-                        notifyAdapter.notifyDataSetChanged()
+                        for ((serviceUuid, chars) in map) {
+                            serviceGroups.add(ServiceGroup(serviceUuid, chars))
+                        }
+                        characteristicAdapter.notifyDataSetChanged()
                         binding.listCharacteristics.visibility = View.VISIBLE
                         binding.tvBleCharStatus.text = "Status: Select one"
-                        Log.d(TAG, "Notify characteristics: ${notifyList.size}")
+                        val totalChars = serviceGroups.sumOf { it.chars.size }
+                        Log.d(TAG, "Characteristics: $totalChars in ${serviceGroups.size} services")
                         Toast.makeText(
                             this@ConsumerDetailsActivity,
-                            "Found ${notifyList.size} characteristics",
+                            "Found $totalChars characteristics",
                             Toast.LENGTH_SHORT
                         ).show()
                     } else {
-                        Log.d(TAG, "Notify characteristics: none")
-                        notifyAdapter.notifyDataSetChanged()
+                        Log.d(TAG, "Characteristics: none")
+                        characteristicAdapter.notifyDataSetChanged()
                         binding.listCharacteristics.visibility = View.GONE
                         binding.tvBleCharStatus.text = "Status: None"
                         Toast.makeText(
                             this@ConsumerDetailsActivity,
-                            "No notify characteristics found",
+                            "No characteristics found",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -359,9 +390,19 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 BluetoothLeService.ACTION_STATUS -> {
                     val status = intent.getStringExtra(BluetoothLeService.EXTRA_STATUS) ?: ""
                     val isCharStatus = status.startsWith("Subscribed") ||
+                        status.startsWith("Subscribing") ||
                         status.startsWith("Characteristic") ||
                         status.startsWith("Service not found") ||
-                        status.startsWith("Select characteristic")
+                        status.startsWith("Select characteristic") ||
+                        status.startsWith("No characteristics") ||
+                        status.startsWith("Read") ||
+                        status.startsWith("Notify") ||
+                        status.startsWith("Notify enabled") ||
+                        status.startsWith("Notify enable failed") ||
+                        status.startsWith("Notify CCCD") ||
+                        status.startsWith("Read") ||
+                        status.startsWith("Write") ||
+                        status.startsWith("Notify")
                     if (isCharStatus) {
                         binding.tvBleCharStatus.text = "Status: $status"
                         return

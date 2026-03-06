@@ -624,7 +624,7 @@
                             android:textSize="12sp"
                             android:textColor="@color/black" />
 
-                        <ListView
+                        <ExpandableListView
                             android:id="@+id/listCharacteristics"
                             android:layout_width="match_parent"
                             android:layout_height="220dp"
@@ -632,7 +632,8 @@
                             android:layout_marginEnd="20dp"
                             android:layout_marginTop="6dp"
                             android:scrollbars="vertical"
-                            android:visibility="gone"/>
+                            android:visibility="gone"
+                            android:groupIndicator="@null"/>
 
                         <TextView
                             android:id="@+id/tvBleDataLabel"
