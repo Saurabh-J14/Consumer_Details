@@ -111,6 +111,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         setupUpdateButton()
         loadConsumerData()
         setupBleUi()
+        binding.btnConsumerUpdate.visibility = View.GONE
 
 
         binding.swipeRefresh.setOnRefreshListener {
@@ -567,6 +568,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             binding.phaselayout.visibility = View.VISIBLE
             binding.txtOpenCamera.visibility = View.VISIBLE
             binding.updatePhoto.visibility = View.VISIBLE
+            binding.btnConsumerUpdate.visibility = View.VISIBLE
         }
         btnExit.setOnClickListener { bleDataDialog?.dismiss() }
 
@@ -722,7 +724,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
     private fun setupUpdateButton() {
 
-        binding.btnupdateConsumer.setOnClickListener {
+        binding.btnConsumerUpdate.setOnClickListener {
 
             val phase = binding.etphases.text.toString().trim().uppercase(Locale.getDefault())
 
@@ -880,25 +882,65 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             val time = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
             val line = "$time | $text\n"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val fileName = "BLE_Data_$date.txt"
+                val relPath = Environment.DIRECTORY_DOCUMENTS + "/ConsumerDetails"
+                val relPathWithSlash = "$relPath/"
                 val resolver = contentResolver
-                val values = android.content.ContentValues().apply {
-                    put(MediaStore.MediaColumns.DISPLAY_NAME, "BLE_Data$date.txt")
-                    put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
-                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/ConsumerDetails")
-                }
                 val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-                val uri = resolver.insert(collection, values) ?: return
+                val prefs = getSharedPreferences("ble_logs", Context.MODE_PRIVATE)
+                val cachedDate = prefs.getString("date", null)
+                val cachedUri = prefs.getString("uri", null)
+
+                val uriFromPrefs = if (cachedDate == date && !cachedUri.isNullOrBlank()) {
+                    android.net.Uri.parse(cachedUri)
+                } else {
+                    null
+                }
+
+                val resolvedUri = uriFromPrefs ?: run {
+                    val selection = "${MediaStore.MediaColumns.DISPLAY_NAME}=? AND ${MediaStore.MediaColumns.RELATIVE_PATH}=?"
+                    val selectionArgs = arrayOf(fileName, relPathWithSlash)
+                    resolver.query(
+                        collection,
+                        arrayOf(MediaStore.MediaColumns._ID),
+                        selection,
+                        selectionArgs,
+                        "${MediaStore.MediaColumns.DATE_ADDED} DESC"
+                    )?.use { cursor ->
+                        if (cursor.moveToFirst()) {
+                            val id = cursor.getLong(0)
+                            android.content.ContentUris.withAppendedId(collection, id)
+                        } else {
+                            null
+                        }
+                    }
+                }
+
+                val uri = resolvedUri ?: run {
+                    val values = android.content.ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                        put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, relPath)
+                    }
+                    resolver.insert(collection, values)
+                } ?: return
+
                 resolver.openOutputStream(uri, "wa")?.use { out ->
                     out.write(line.toByteArray(Charset.forName("UTF-8")))
                     out.flush()
-                }
+                } ?: return
+
+                prefs.edit()
+                    .putString("date", date)
+                    .putString("uri", uri.toString())
+                    .apply()
             } else {
                 val dir = File(
                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
                     "ConsumerDetails"
                 )
                 if (!dir.exists()) dir.mkdirs()
-                val file = File(dir, "ble_data_$date.txt")
+                val file = File(dir, "BLE_Data_$date.txt")
                 FileOutputStream(file, true).use { it.write(line.toByteArray(Charset.forName("UTF-8"))) }
             }
         } catch (_: Exception) {
