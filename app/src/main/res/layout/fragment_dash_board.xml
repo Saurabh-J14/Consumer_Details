@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -85,156 +84,156 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:padding="1dp"
+                    android:weightSum="3">
+
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
+                        android:layout_weight="1"
                         android:gravity="center"
-                        android:orientation="horizontal"
-                        android:padding="1dp"
-                        android:weightSum="3">
+                        android:orientation="vertical">
 
-                        <LinearLayout
-                            android:layout_width="0dp"
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/consumerUpdate"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:layout_margin="6dp"
+                            app:cardCornerRadius="60dp"
+                            app:cardElevation="8dp"
+                            app:strokeWidth="4dp"
+                            app:strokeColor="@color/card_bg">
+
+                            <LinearLayout
+                                android:id="@+id/complete"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/txtupdate"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text=""
+                                    android:textColor="@color/black"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <TextView
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:orientation="vertical">
-
-                            <com.google.android.material.card.MaterialCardView
-                                android:id="@+id/consumerUpdate"
-                                android:layout_width="100dp"
-                                android:layout_height="100dp"
-                                android:layout_margin="6dp"
-                                app:cardCornerRadius="60dp"
-                                app:cardElevation="8dp"
-                                app:strokeWidth="4dp"
-                                app:strokeColor="@color/card_bg">
-
-                                <LinearLayout
-                                    android:id="@+id/complete"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:gravity="center"
-                                    android:orientation="vertical">
-
-                                    <TextView
-                                        android:id="@+id/txtupdate"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text=""
-                                        android:textColor="@color/black"
-                                        android:textSize="14sp"
-                                        android:textStyle="bold" />
-                                </LinearLayout>
-
-                            </com.google.android.material.card.MaterialCardView>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="Total Count"
-                                android:textColor="@color/black"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:orientation="vertical">
-
-                            <com.google.android.material.card.MaterialCardView
-                                android:id="@+id/totalCounts"
-                                android:layout_width="100dp"
-                                android:layout_height="100dp"
-                                android:layout_margin="6dp"
-                                app:cardCornerRadius="60dp"
-                                app:cardElevation="8dp"
-                                app:strokeWidth="4dp"
-                                app:strokeColor="@color/card_bg">
-
-                                <LinearLayout
-                                    android:id="@+id/totalcom"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:gravity="center"
-                                    android:orientation="vertical">
-
-                                    <TextView
-                                        android:id="@+id/totalscountss"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text=""
-                                        android:textSize="16sp"
-                                        android:textStyle="bold" />
-                                </LinearLayout>
-
-                            </com.google.android.material.card.MaterialCardView>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/total_complete"
-                                android:textColor="@color/black"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:orientation="vertical">
-
-                            <com.google.android.material.card.MaterialCardView
-                                android:id="@+id/totalPending"
-                                android:layout_width="100dp"
-                                android:layout_height="100dp"
-                                android:layout_margin="6dp"
-                                app:cardCornerRadius="60dp"
-                                app:cardElevation="8dp"
-                                app:strokeWidth="4dp"
-                                app:strokeColor="@color/card_bg">
-
-                                <LinearLayout
-                                    android:id="@+id/pending2"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:gravity="center"
-                                    android:orientation="vertical">
-
-                                    <TextView
-                                        android:id="@+id/pendingCount"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text=""
-                                        android:textColor="@color/black"
-                                        android:textSize="14sp"
-                                        android:textStyle="bold" />
-                                </LinearLayout>
-
-                            </com.google.android.material.card.MaterialCardView>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="Total Pending"
-                                android:textColor="@color/black"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-
-                        </LinearLayout>
+                            android:layout_marginTop="2dp"
+                            android:text="Total Count"
+                            android:textColor="@color/black"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
 
                     </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/totalCounts"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:layout_margin="6dp"
+                            app:cardCornerRadius="60dp"
+                            app:cardElevation="8dp"
+                            app:strokeWidth="4dp"
+                            app:strokeColor="@color/card_bg">
+
+                            <LinearLayout
+                                android:id="@+id/totalcom"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/totalscountss"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text=""
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/total_complete"
+                            android:textColor="@color/black"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/totalPending"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:layout_margin="6dp"
+                            app:cardCornerRadius="60dp"
+                            app:cardElevation="8dp"
+                            app:strokeWidth="4dp"
+                            app:strokeColor="@color/card_bg">
+
+                            <LinearLayout
+                                android:id="@+id/pending2"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/pendingCount"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text=""
+                                    android:textColor="@color/black"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Total Pending"
+                            android:textColor="@color/black"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
 
             </LinearLayout>
 
@@ -242,10 +241,9 @@
                 android:id="@+id/rvConsumerList"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_marginTop="10dp"
-                android:backgroundTint="@color/white"
+                android:layout_marginTop="20dp"
                 android:background="@drawable/btn_rounded"
-                android:visibility="visible"
+                android:visibility="gone"
                 app:layout_constraintTop_toBottomOf="@id/dashBoardLayout"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
