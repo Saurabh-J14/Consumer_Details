@@ -17,6 +17,7 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -57,7 +58,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private var capturedBitmap: Bitmap? = null
     private var openCameraAfterLocation = false
     private lateinit var fusedLocationClient: FusedLocationTracker
-
 
     private var bluetoothAdapter: BluetoothAdapter? = null
     private val deviceAddresses = mutableListOf<String>()
@@ -343,19 +343,19 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 BluetoothLeService.ACTION_STATUS -> {
                     val status = intent.getStringExtra(BluetoothLeService.EXTRA_STATUS) ?: ""
                     val isCharStatus = status.startsWith("Subscribed") ||
-                        status.startsWith("Subscribing") ||
-                        status.startsWith("Characteristic") ||
-                        status.startsWith("Service not found") ||
-                        status.startsWith("Select characteristic") ||
-                        status.startsWith("No characteristics") ||
-                        status.startsWith("Read") ||
-                        status.startsWith("Notify") ||
-                        status.startsWith("Notify enabled") ||
-                        status.startsWith("Notify enable failed") ||
-                        status.startsWith("Notify CCCD") ||
-                        status.startsWith("Read") ||
-                        status.startsWith("Write") ||
-                        status.startsWith("Notify")
+                            status.startsWith("Subscribing") ||
+                            status.startsWith("Characteristic") ||
+                            status.startsWith("Service not found") ||
+                            status.startsWith("Select characteristic") ||
+                            status.startsWith("No characteristics") ||
+                            status.startsWith("Read") ||
+                            status.startsWith("Notify") ||
+                            status.startsWith("Notify enabled") ||
+                            status.startsWith("Notify enable failed") ||
+                            status.startsWith("Notify CCCD") ||
+                            status.startsWith("Read") ||
+                            status.startsWith("Write") ||
+                            status.startsWith("Notify")
                     if (isCharStatus) return
                     if (status.startsWith("Connected")) {
                         Log.d(TAG, "BLE connected: $status")
@@ -398,7 +398,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                     if (parsed.phase != null) {
                         applyPhaseFromBleData(parsed.phase)
                     }
-                    getSavedData(textDisplay)
+                    saveBleTextToFile(textDisplay)
                     val enableConfirm = parsed.phase != null && parsed.dtu != null
                     blePhaseConfirmBtn?.isEnabled = enableConfirm
                     if (bleServicesDialog?.isShowing == true) {
@@ -822,7 +822,11 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         }
     }
 
-    private data class ParsedBleData(val phase: String?, val dtu: String?, val ping: String?)
+    private data class ParsedBleData(
+        val phase: String?,
+        val dtu: String?,
+        val ping: String?
+    )
 
     private fun updateDialogFromBleText(raw: String): ParsedBleData {
         lastBleText = raw
@@ -869,7 +873,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         return lastParsedBle!!
     }
 
-    private fun getSavedData(text: String) {
+    private fun saveBleTextToFile(text: String) {
         if (text.isBlank()) return
         try {
             val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
