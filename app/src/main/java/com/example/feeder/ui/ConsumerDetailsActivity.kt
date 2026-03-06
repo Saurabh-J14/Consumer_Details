@@ -17,7 +17,6 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -58,6 +57,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private var capturedBitmap: Bitmap? = null
     private var openCameraAfterLocation = false
     private lateinit var fusedLocationClient: FusedLocationTracker
+
 
     private var bluetoothAdapter: BluetoothAdapter? = null
     private val deviceAddresses = mutableListOf<String>()

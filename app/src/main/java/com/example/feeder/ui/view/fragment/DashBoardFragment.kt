@@ -516,7 +516,7 @@ class DashBoardFragment : Fragment() {
     }
     override fun onResume() {
         super.onResume()
-
+        loadCounts()
         loadPendingCount()   // count refresh
     }
 

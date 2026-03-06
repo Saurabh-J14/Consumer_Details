@@ -580,6 +580,110 @@
                 </LinearLayout>
 
                     <!-- BLE UI removed; dialogs handle BLE flow -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvBleTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:text="Bluetooth (BLE)"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnBluetooth"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginEnd="20dp"
+                        android:text="Scan BLE Devices"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvBleStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="2dp"
+                        android:text="Status: Idle"
+                        android:textColor="@color/black"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <ListView
+                        android:id="@+id/listDevices"
+                        android:layout_width="match_parent"
+                        android:layout_height="220dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="20dp"
+                        android:scrollbars="vertical"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tvBleCharTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:text="Characteristics"
+                        android:textColor="@color/black"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvBleCharStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="2dp"
+                        android:text="Status: Idle"
+                        android:textColor="@color/black"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <ListView
+                        android:id="@+id/listCharacteristics"
+                        android:layout_width="match_parent"
+                        android:layout_height="220dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="6dp"
+                        android:layout_marginEnd="20dp"
+                        android:scrollbars="vertical"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tvBleDataLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:text="Received Data"
+                        android:textColor="@color/black"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvBleData"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="6dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="@drawable/tv_background"
+                        android:padding="8dp"
+                        android:text="No data"
+                        android:textColor="@color/black"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/recevie"
