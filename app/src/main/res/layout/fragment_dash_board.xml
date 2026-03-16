@@ -34,6 +34,17 @@
                 app:civ_border_color="@color/card_bg"
                 app:civ_border_width="3dp" />
 
+            <ImageView
+                android:id="@+id/ivBluetooth"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="end"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_ble_notify"
+                app:civ_border_color="@color/card_bg"
+                app:civ_border_width="3dp"
+                app:tint="@color/white" />
+
         </androidx.appcompat.widget.Toolbar>
 
     </com.google.android.material.appbar.AppBarLayout>

@@ -47,6 +47,9 @@ class BluetoothLeService : Service() {
         const val ACTION_NOTIFY_LIST = "com.example.feeder.action.NOTIFY_LIST"
         const val ACTION_SUBSCRIBE_CHAR = "com.example.feeder.action.SUBSCRIBE_CHAR"
         const val ACTION_READ_CHAR = "com.example.feeder.action.READ_CHAR"
+        const val ACTION_REQUEST_STATUS = "com.example.feeder.action.REQUEST_STATUS"
+        const val ACTION_REQUEST_NOTIFY_LIST = "com.example.feeder.action.REQUEST_NOTIFY_LIST"
+        const val ACTION_REFRESH_SERVICES = "com.example.feeder.action.REFRESH_SERVICES"
 
         const val EXTRA_DEVICE_ADDRESS = "extra_device_address"
         const val EXTRA_DEVICE_NAME = "extra_device_name"
@@ -82,6 +85,8 @@ class BluetoothLeService : Service() {
 
     private var bluetoothGatt: BluetoothGatt? = null
     private var connectedDeviceName: String? = null
+    private var connectedDeviceAddress: String? = null
+    private var lastNotifyList: ArrayList<String>? = null
 
     private val lineBuffer = StringBuilder()
     private var isReceivingFile = false
@@ -89,6 +94,7 @@ class BluetoothLeService : Service() {
     private var fileMime: String? = null
     private var fileExpectedSize: Long = 0
     private var fileBuffer: ByteArrayOutputStream? = null
+    private var isForegroundStarted = false
 
     override fun onCreate() {
         super.onCreate()
@@ -101,9 +107,10 @@ class BluetoothLeService : Service() {
     @SuppressLint("MissingPermission")
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        ensureForegroundStarted()
         when (intent?.action) {
             ACTION_START_SCAN -> {
-                ensureForeground("Scanning for BLE devices", "Scanning...")
+                updateForeground("Scanning for BLE devices", "Scanning...")
                 startScan()
             }
             ACTION_STOP_SCAN -> stopScan()
@@ -112,7 +119,7 @@ class BluetoothLeService : Service() {
                 if (address.isNullOrBlank()) {
                     sendStatus("Invalid device address")
                 } else {
-                    ensureForeground("Connecting", address)
+                    updateForeground("Connecting", address)
                     connect(address)
                 }
             }
@@ -135,6 +142,27 @@ class BluetoothLeService : Service() {
                     readCharacteristic(serviceUuid, charUuid)
                 }
             }
+            ACTION_REQUEST_STATUS -> {
+                if (connectedDeviceName != null) {
+                    sendStatus("Connected to ${connectedDeviceName}")
+                } else if (connectedDeviceAddress != null) {
+                    sendStatus("Connected to ${connectedDeviceAddress}")
+                } else {
+                    sendStatus("Disconnected")
+                }
+            }
+            ACTION_REQUEST_NOTIFY_LIST -> {
+                val list = lastNotifyList
+                if (!list.isNullOrEmpty()) {
+                    sendNotifyList(list)
+                }
+            }
+            ACTION_REFRESH_SERVICES -> {
+                val gatt = bluetoothGatt
+                if (gatt != null) {
+                    gatt.discoverServices()
+                }
+            }
         }
         return START_STICKY
     }
@@ -152,6 +180,21 @@ class BluetoothLeService : Service() {
     private fun ensureForeground(title: String, text: String) {
         val notification = buildNotification(title, text)
         startForeground(notificationId, notification)
+        isForegroundStarted = true
+    }
+
+    private fun ensureForegroundStarted() {
+        if (!isForegroundStarted) {
+            ensureForeground("BLE Service", "Ready")
+        }
+    }
+
+    private fun updateForeground(title: String, text: String) {
+        if (isForegroundStarted) {
+            updateNotification(title, text)
+        } else {
+            ensureForeground(title, text)
+        }
     }
 
     private fun buildNotification(title: String, text: String): Notification {
@@ -169,8 +212,9 @@ class BluetoothLeService : Service() {
             .setContentTitle(title)
             .setContentText(text)
             .setContentIntent(pendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setVibrate(longArrayOf(0, 250, 150, 250))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setSilent(true)
+            .setOnlyAlertOnce(true)
             .setOngoing(true)
             .build()
     }
@@ -185,10 +229,10 @@ class BluetoothLeService : Service() {
             val channel = NotificationChannel(
                 channelId,
                 "BLE Alerts",
-                NotificationManager.IMPORTANCE_HIGH
+                NotificationManager.IMPORTANCE_LOW
             ).apply {
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 250, 150, 250)
+                enableVibration(false)
+                setSound(null, null)
             }
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
@@ -298,6 +342,7 @@ class BluetoothLeService : Service() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 bluetoothGatt = gatt
+                connectedDeviceAddress = gatt.device?.address
                 val name = connectedDeviceName ?: "Unknown"
                 sendStatus("Connected to $name")
                 updateNotification("Connected", name)
@@ -305,6 +350,9 @@ class BluetoothLeService : Service() {
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 sendStatus("Device disconnected")
                 updateNotification("Disconnected", "No device")
+                connectedDeviceName = null
+                connectedDeviceAddress = null
+                lastNotifyList = null
             }
         }
 
@@ -324,6 +372,7 @@ class BluetoothLeService : Service() {
                 sendStatus("No characteristics found")
                 return
             }
+            lastNotifyList = ArrayList(characteristicList)
             sendNotifyList(characteristicList)
             sendStatus("Select characteristic to subscribe")
         }
