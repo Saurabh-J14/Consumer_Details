@@ -65,9 +65,9 @@ class PhasorView @JvmOverloads constructor(
     }
 
     private val phaseColors = mapOf(
-        "A" to Color.parseColor("#D32F2F"),
-        "B" to Color.parseColor("#FFEB3B"),
-        "C" to Color.parseColor("#1976D2")
+        "R" to Color.parseColor("#D32F2F"),
+        "Y" to Color.parseColor("#FFEB3B"),
+        "B" to Color.parseColor("#1976D2")
     )
 
     private val angleOffset = -90.0
@@ -78,9 +78,9 @@ class PhasorView @JvmOverloads constructor(
 
     fun startFiveSecondRotation(targetPhase: String) {
         val targetAngle = when (targetPhase.uppercase()) {
-            "A" -> 0f
-            "B" -> 120f
-            "C" -> 240f
+            "R" -> 330f
+            "Y" -> 90f
+            "B" -> 210f
             else -> 30f
         }
 
@@ -106,13 +106,13 @@ class PhasorView @JvmOverloads constructor(
         canvas.drawCircle(cx, cy, radius, borderPaint)
 
         // Phase Sectors
-        sectorPaint.color = phaseColors["A"]!!
+        sectorPaint.color = phaseColors["R"]!!
         canvas.drawArc(oval, 330f + angleOffset.toFloat(), 60f, true, sectorPaint)
 
-        sectorPaint.color = phaseColors["B"]!!
+        sectorPaint.color = phaseColors["Y"]!!
         canvas.drawArc(oval, 90f + angleOffset.toFloat(), 60f, true, sectorPaint)
 
-        sectorPaint.color = phaseColors["C"]!!
+        sectorPaint.color = phaseColors["B"]!!
         canvas.drawArc(oval, 210f + angleOffset.toFloat(), 60f, true, sectorPaint)
 
         // Gray fan
@@ -137,15 +137,12 @@ class PhasorView @JvmOverloads constructor(
             canvas.drawText(deg.toString(), textX, textY, degreeTextPaint)
         }
 
-        // Phase Labels
-        drawPhaseLabel(canvas, cx, cy, radius * 0.56f, (0f + angleOffset).toFloat(), "A")
-        drawPhaseLabel(canvas, cx, cy, radius * 0.71f, (120f + angleOffset).toFloat(), "B")
-        drawPhaseLabel(canvas, cx, cy, radius * 0.56f, (240f + angleOffset).toFloat(), "C")
+        drawPhaseLabel(canvas, cx, cy, radius * 0.56f, (0f + angleOffset).toFloat(), "R")
+        drawPhaseLabel(canvas, cx, cy, radius * 0.71f, (120f + angleOffset).toFloat(), "Y")
+        drawPhaseLabel(canvas, cx, cy, radius * 0.56f, (240f + angleOffset).toFloat(), "B")
 
-        // 🔥 Draw Arrow (Image jaisa)
         drawArrow(canvas, cx, cy, radius * 0.85f)
 
-        // Center circle
         canvas.drawCircle(cx, cy, 14f, Paint().apply {
             color = Color.BLACK
             style = Paint.Style.FILL

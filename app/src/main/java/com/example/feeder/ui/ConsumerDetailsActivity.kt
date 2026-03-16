@@ -4,7 +4,6 @@ import ConsumerUpdateBody
 import ConsumerUpdateRepository
 import android.Manifest
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothAdapter
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -24,12 +23,12 @@ import android.provider.MediaStore
 import android.text.TextUtils
 import android.util.Log
 import android.view.View
-import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.material.snackbar.Snackbar
 import com.example.feeder.R
 import com.example.feeder.data.remote.RetrofitClient
 import com.example.feeder.databinding.ActivityConsumerDetailsBinding
@@ -50,7 +49,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityConsumerDetailsBinding
     private lateinit var prefManager: PrefManager
     private val BT_PERMISSION_REQ = 1010
-    private val REQ_ENABLE_BT = 1011
     private val CAMERA_REQ = 1001
     private val PERMISSION_REQ = 2001
     private var latitude = 0.0
@@ -59,35 +57,32 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private var openCameraAfterLocation = false
     private lateinit var fusedLocationClient: FusedLocationTracker
 
-    private var bluetoothAdapter: BluetoothAdapter? = null
-    private val deviceAddresses = mutableListOf<String>()
-    private val deviceLabels = mutableListOf<String>()
-    private lateinit var deviceAdapter: ArrayAdapter<String>
-    private var isScanning = false
     private val serviceGroups = mutableListOf<ServiceGroup>()
-    private lateinit var characteristicAdapter: BleCharTreeAdapter
-    private val scanHandler = Handler(Looper.getMainLooper())
-    private val scanTimeoutMs = 60_000L
-    private val stopScanRunnable = Runnable {
-        if (isScanning) stopBleScan()
-    }
-    private var bleScanDialog: androidx.appcompat.app.AlertDialog? = null
     private var bleServicesDialog: androidx.appcompat.app.AlertDialog? = null
     private var bleDataDialog: androidx.appcompat.app.AlertDialog? = null
     private var bleDataLabel: android.widget.TextView? = null
-    private var bleScanStatusLabel: android.widget.TextView? = null
     private var bleServicesStatusLabel: android.widget.TextView? = null
     private var blePhaseStatusLabel: android.widget.TextView? = null
     private var blePhasePingLabel: android.widget.TextView? = null
     private var blePhaseDtuLabel: android.widget.TextView? = null
+    private var blePhaseDeviceIdLabel: android.widget.TextView? = null
     private var blePhasePhasor: com.example.feeder.custom.PhasorView? = null
     private var blePhaseConfirmBtn: android.widget.Button? = null
     private var autoReadChar: CharItem? = null
+    private var bleReadRequested = false
     private var lastBleText: String? = null
     private var lastParsedBle: ParsedBleData? = null
-    private var showBleDialogAfterEnable = false
-
-
+    private var isBleConnected = false
+    private val refreshHandler = Handler(Looper.getMainLooper())
+    private val refreshIntervalMs = 20_000L
+    private val refreshRunnable: Runnable = object : Runnable {
+        override fun run() {
+            if (isBleConnected) {
+                startBleService(BluetoothLeService.ACTION_REFRESH_SERVICES)
+                refreshHandler.postDelayed(this, refreshIntervalMs)
+            }
+        }
+    }
     private val viewModel: ConsumerUpdateViewModel by viewModels {
         ConsumerUpdateViewModelFactory(ConsumerUpdateRepository(RetrofitClient.getServices()))
     }
@@ -139,65 +134,8 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     }
     @SuppressLint("MissingPermission", "ClickableViewAccessibility")
     private fun setupBleUi() {
-
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-
-        deviceAdapter = ArrayAdapter(this, R.layout.item_ble_device, R.id.tvBleDevice, deviceLabels)
-        characteristicAdapter = BleCharTreeAdapter(this, serviceGroups)
-
-        refreshPairedDevices()
-    }
-
-    private fun startBleScan() {
-        deviceAddresses.clear()
-        deviceLabels.clear()
         serviceGroups.clear()
         autoReadChar = null
-        deviceAdapter.notifyDataSetChanged()
-        characteristicAdapter.notifyDataSetChanged()
-        isScanning = true
-        bleScanStatusLabel?.text = "Status: Scanning..."
-        startBleService(BluetoothLeService.ACTION_START_SCAN)
-        scanHandler.removeCallbacks(stopScanRunnable)
-        scanHandler.postDelayed(stopScanRunnable, scanTimeoutMs)
-    }
-
-    private fun stopBleScan() {
-        isScanning = false
-        bleScanStatusLabel?.text = "Status: Scan stopped"
-        startBleService(BluetoothLeService.ACTION_STOP_SCAN)
-        scanHandler.removeCallbacks(stopScanRunnable)
-    }
-
-
-    @SuppressLint("MissingPermission")
-    private fun refreshPairedDevices() {
-        if (bluetoothAdapter == null) return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (ContextCompat.checkSelfPermission(
-                    this@ConsumerDetailsActivity,
-                    Manifest.permission.BLUETOOTH_CONNECT
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                return
-            }
-        }
-        val bonded = bluetoothAdapter?.bondedDevices ?: emptySet()
-        for (device in bonded) {
-            val address = device.address
-            val name = device.name?.trim()
-            if (name.isNullOrBlank() || name.equals("Unknown", ignoreCase = true)) continue
-            if (!deviceAddresses.contains(address)) {
-                deviceAddresses.add(address)
-                deviceLabels.add("Paired: $name\n$address")
-                deviceAdapter.notifyDataSetChanged()
-            }
-        }
-    }
-
-    private fun connectToBleDevice(address: String) {
-        bleScanStatusLabel?.text = "Status: Connecting..."
-        startBleService(BluetoothLeService.ACTION_CONNECT, address)
     }
 
     private fun startBleService(action: String, address: String? = null) {
@@ -212,6 +150,11 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         } else {
             startService(intent)
         }
+    }
+
+    private fun requestBleStatus() {
+        startBleService(BluetoothLeService.ACTION_REQUEST_STATUS)
+        startBleService(BluetoothLeService.ACTION_REQUEST_NOTIFY_LIST)
     }
 
     private fun ensureBlePermissions(): Boolean {
@@ -242,20 +185,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
         return true
     }
-
-    private fun subscribeToCharacteristic(serviceUuid: String, charUuid: String) {
-        val intent = Intent(this, BluetoothLeService::class.java).apply {
-            action = BluetoothLeService.ACTION_SUBSCRIBE_CHAR
-            putExtra(BluetoothLeService.EXTRA_SERVICE_UUID, serviceUuid)
-            putExtra(BluetoothLeService.EXTRA_CHAR_UUID, charUuid)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
-        }
-    }
-
     private fun readCharacteristic(serviceUuid: String, charUuid: String) {
         val intent = Intent(this, BluetoothLeService::class.java).apply {
             action = BluetoothLeService.ACTION_READ_CHAR
@@ -274,36 +203,22 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private val bleReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
-                BluetoothAdapter.ACTION_STATE_CHANGED -> {
-                    val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
-                    if (state == BluetoothAdapter.STATE_ON) {
-                        if (ensureBlePermissions() && !isScanning) {
-                            startBleScan()
-                        }
-                    } else if (state == BluetoothAdapter.STATE_OFF) {
-                    }
-                }
-                BluetoothLeService.ACTION_DEVICE_FOUND -> {
-                    val name = intent.getStringExtra(BluetoothLeService.EXTRA_DEVICE_NAME)?.trim()
-                    val address = intent.getStringExtra(BluetoothLeService.EXTRA_DEVICE_ADDRESS) ?: return
-                    if (name.isNullOrBlank() || name.equals("Unknown", ignoreCase = true)) return
-                    if (!deviceAddresses.contains(address)) {
-                        deviceAddresses.add(address)
-                        deviceLabels.add("$name\n$address")
-                        deviceAdapter.notifyDataSetChanged()
-                        Log.d(TAG, "BLE device found: name=$name, address=$address")
-                    }
-                }
                 BluetoothLeService.ACTION_NOTIFY_LIST -> {
                     val list = intent.getStringArrayListExtra(BluetoothLeService.EXTRA_NOTIFY_LIST)
                     serviceGroups.clear()
                     if (!list.isNullOrEmpty()) {
                         val map = LinkedHashMap<String, MutableList<CharItem>>()
+                        val hasTargetChar = list.any { entry ->
+                            val parts = entry.split("|")
+                            val ch = parts.getOrNull(1) ?: ""
+                            ch.startsWith("0000abf1", ignoreCase = true)
+                        }
                         for (entry in list) {
                             val parts = entry.split("|")
                             val service = parts.getOrNull(0) ?: continue
                             val ch = parts.getOrNull(1) ?: continue
                             val props = parts.getOrNull(2)?.toIntOrNull() ?: 0
+                            if (hasTargetChar && !ch.startsWith("0000abf1", ignoreCase = true)) continue
                             val isRead = (props and android.bluetooth.BluetoothGattCharacteristic.PROPERTY_READ) != 0
                             if (!isRead) continue
                             val listForService = map.getOrPut(service) { mutableListOf() }
@@ -315,30 +230,23 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                         val totalChars = serviceGroups.sumOf { it.chars.size }
                         if (totalChars == 0) {
                             Log.d(TAG, "Readable characteristics: none")
-                            characteristicAdapter.notifyDataSetChanged()
-                            Toast.makeText(
-                                this@ConsumerDetailsActivity,
-                                "No readable characteristics found",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            blePhaseStatusLabel?.text = "No readable characteristics found"
                         } else {
-                            characteristicAdapter.notifyDataSetChanged()
                             Log.d(TAG, "Readable characteristics: $totalChars in ${serviceGroups.size} services")
-                            Toast.makeText(
-                                this@ConsumerDetailsActivity,
-                                "Found $totalChars readable characteristics",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            showBleServicesDialog()
+                            autoReadChar = serviceGroups.flatMap { it.chars }.firstOrNull()
+                            if (!bleReadRequested) {
+                                // Cache the latest readable characteristic list, but do not read until requested.
+                            } else if (autoReadChar == null) {
+                                blePhaseStatusLabel?.text = "No readable characteristics found"
+                            } else {
+                                showBleDataDialog()
+                                blePhaseStatusLabel?.text = "Status: Reading..."
+                                readCharacteristic(autoReadChar!!.serviceUuid, autoReadChar!!.charUuid)
+                            }
                         }
                     } else {
                         Log.d(TAG, "Characteristics: none")
-                        characteristicAdapter.notifyDataSetChanged()
-                        Toast.makeText(
-                            this@ConsumerDetailsActivity,
-                            "No characteristics found",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        blePhaseStatusLabel?.text = "No characteristics found"
                     }
                 }
                 BluetoothLeService.ACTION_STATUS -> {
@@ -360,18 +268,22 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                     if (isCharStatus) return
                     if (status.startsWith("Connected")) {
                         Log.d(TAG, "BLE connected: $status")
-                        bleScanDialog?.dismiss()
                         blePhaseStatusLabel?.text = "Status: Connected"
                         bleServicesStatusLabel?.text = "Status: Connected"
-                    }
-                    if (status.startsWith("Connected")) {
-                        isScanning = false
+                        if (!isBleConnected) {
+                            isBleConnected = true
+                            refreshHandler.removeCallbacks(refreshRunnable)
+                            refreshHandler.postDelayed(refreshRunnable, refreshIntervalMs)
+                        }
                     }
                     if (status.startsWith("Disconnected") || status.startsWith("Device disconnected")) {
+                        bleReadRequested = false
                         bleDataDialog?.dismiss()
                         bleServicesDialog?.dismiss()
                         blePhaseStatusLabel?.text = "Status: Disconnected"
                         bleServicesStatusLabel?.text = "Status: Disconnected"
+                        isBleConnected = false
+                        refreshHandler.removeCallbacks(refreshRunnable)
                     }
                 }
                 BluetoothLeService.ACTION_DATA -> {
@@ -394,6 +306,13 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                     val textDisplay = text ?: bytes?.toString(Charsets.UTF_8) ?: "-"
                     val display = "Text:\n$textDisplay\n\nHex:\n$hexPreview"
                     val parsed = updateDialogFromBleText(textDisplay)
+                    if (!parsed.valid) {
+                        blePhaseStatusLabel?.text = "Invalid data received from the field unit"
+                        return
+                    }
+                    if (!bleReadRequested) {
+                        return
+                    }
                     bleDataLabel?.visibility = View.VISIBLE
                     blePhaseStatusLabel?.text = "Status: Receiving data"
                     if (parsed.phase != null) {
@@ -422,8 +341,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         val filter = IntentFilter().apply {
-            addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
-            addAction(BluetoothLeService.ACTION_DEVICE_FOUND)
             addAction(BluetoothLeService.ACTION_NOTIFY_LIST)
             addAction(BluetoothLeService.ACTION_STATUS)
             addAction(BluetoothLeService.ACTION_DATA)
@@ -433,7 +350,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         } else {
             registerReceiver(bleReceiver, filter)
         }
-        refreshPairedDevices()
+        requestBleStatus()
     }
 
     override fun onResume() {
@@ -442,6 +359,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+        refreshHandler.removeCallbacks(refreshRunnable)
         try {
             unregisterReceiver(bleReceiver)
         } catch (_: Exception) {}
@@ -451,76 +369,23 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private fun setupConnectDeviceButton() {
 
         binding.btnPhases.setOnClickListener {
-            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-            if (bluetoothAdapter == null) {
-                Toast.makeText(this, "Bluetooth not supported", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
             if (!ensureBlePermissions()) return@setOnClickListener
-            if (bluetoothAdapter?.isEnabled != true) {
-                showBleDialogAfterEnable = true
-                startActivityForResult(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), REQ_ENABLE_BT)
+            if (!isBleConnected) {
+                Snackbar.make(
+                    binding.root,
+                    "Device is not connected. Connect device and try again",
+                    Snackbar.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
-            showBleScanDialog()
-            startBleScan()
-        }
-    }
-
-    private fun showBleScanDialog() {
-        if (bleScanDialog?.isShowing == true) return
-        val dialogView = layoutInflater.inflate(R.layout.dialog_ble_devices, null)
-        val list = dialogView.findViewById<android.widget.ListView>(R.id.listBleDialog)
-        val status = dialogView.findViewById<android.widget.TextView>(R.id.tvBleDialogStatus)
-        list.adapter = deviceAdapter
-        list.setOnItemClickListener { _, _, position, _ ->
-            val address = deviceAddresses.getOrNull(position) ?: return@setOnItemClickListener
-            connectToBleDevice(address)
-        }
-
-        status.text = "Status: Scanning..."
-
-        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
-            .setView(dialogView)
-            .setCancelable(true)
-            .create()
-        dialog.show()
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        bleScanDialog = dialog
-        bleScanStatusLabel = status
-    }
-
-    @SuppressLint("SetTextI18n")
-    private fun showBleServicesDialog() {
-        if (bleServicesDialog?.isShowing == true) return
-        val dialogView = layoutInflater.inflate(R.layout.dialog_ble_services, null)
-        val list = dialogView.findViewById<android.widget.ExpandableListView>(R.id.listBleServices)
-        val status = dialogView.findViewById<android.widget.TextView>(R.id.tvBleServicesStatus)
-        list.setAdapter(characteristicAdapter)
-        list.setOnChildClickListener { _, _, groupPosition, childPosition, _ ->
-            val item = serviceGroups
-                .getOrNull(groupPosition)
-                ?.chars
-                ?.getOrNull(childPosition)
-                ?: return@setOnChildClickListener true
-            autoReadChar = item
-            status.text = "Status: Reading..."
-            readCharacteristic(item.serviceUuid, item.charUuid)
-            bleServicesDialog?.dismiss()
+            bleReadRequested = true
             showBleDataDialog()
-            true
+            bleDataLabel?.text = "Waiting for data..."
+            bleDataLabel?.visibility = View.VISIBLE
+            blePhaseStatusLabel?.text = "Status: Reading..."
+            blePhaseConfirmBtn?.isEnabled = false
+            requestBleStatus()
         }
-
-        status.text = "Status: Select characteristic"
-
-        val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
-            .setView(dialogView)
-            .setCancelable(true)
-            .create()
-        dialog.show()
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        bleServicesDialog = dialog
-        bleServicesStatusLabel = status
     }
 
     @SuppressLint("SetTextI18n")
@@ -532,13 +397,14 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         val tvStatus = dialogView.findViewById<android.widget.TextView>(R.id.tvDialogStatus)
         val tvPing = dialogView.findViewById<android.widget.TextView>(R.id.tvDialogPing)
         val tvDtu = dialogView.findViewById<android.widget.TextView>(R.id.tvDialogDtu)
+        val tvDeviceId = dialogView.findViewById<android.widget.TextView>(R.id.tvDialogDeviceId)
         val btnConfirm = dialogView.findViewById<android.widget.Button>(R.id.btnConfirm)
         val btnExit = dialogView.findViewById<android.widget.Button>(R.id.btnExit)
         val btnRetry = dialogView.findViewById<android.widget.Button>(R.id.btnretry)
 
         btnConfirm.visibility = View.VISIBLE
         btnConfirm.isEnabled = false
-        tvLabel.textSize = 20f
+        tvLabel.textSize = 14f
         tvLabel.text = "Waiting for data..."
         tvLabel.visibility = View.INVISIBLE
         tvStatus.text = "Status: Connected"
@@ -555,6 +421,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             }
         }
         btnConfirm.setOnClickListener {
+            bleReadRequested = false
             bleDataDialog?.dismiss()
             val parsed = lastParsedBle
             val phaseValue = parsed?.phase ?: lastBleText
@@ -565,12 +432,21 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             if (!dtuValue.isNullOrBlank()) {
                 binding.etDt.setText(dtuValue)
             }
+            val deviceIdValue = parsed?.deviceId
+            if (!deviceIdValue.isNullOrBlank()) {
+                binding.etDeviceId.setText(deviceIdValue)
+                binding.deviceIdLayout.visibility = View.VISIBLE
+            }
             binding.phaselayout.visibility = View.VISIBLE
+            binding.dTransformerLayout.visibility = View.VISIBLE
             binding.txtOpenCamera.visibility = View.VISIBLE
             binding.updatePhoto.visibility = View.VISIBLE
             binding.btnConsumerUpdate.visibility = View.VISIBLE
         }
-        btnExit.setOnClickListener { bleDataDialog?.dismiss() }
+        btnExit.setOnClickListener {
+            bleReadRequested = false
+            bleDataDialog?.dismiss()
+        }
 
         val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
             .setView(dialogView)
@@ -583,6 +459,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         blePhaseStatusLabel = tvStatus
         blePhasePingLabel = tvPing
         blePhaseDtuLabel = tvDtu
+        blePhaseDeviceIdLabel = tvDeviceId
         blePhasePhasor = phasor
         blePhaseConfirmBtn = btnConfirm
     }
@@ -610,13 +487,13 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 else -> Color.BLACK
             })
             val mappedPhase = when (phaseInput) {
-                "RYB" -> "A"
-                "R" -> "A"
-                "RY"  -> "B"
-                "B"   -> "C"
-                "RB" -> "C"
-                "YB"  -> "C"
-                "Y"   -> "B"
+                "RYB" -> "R"
+                "R" -> "R"
+                "RY"  -> "Y"
+                "B"   -> "B"
+                "RB" -> "B"
+                "YB"  -> "B"
+                "Y"   -> "Y"
                 else -> {
                     binding.etphases.error = "Invalid Phase"
                     binding.etphases.requestFocus()
@@ -661,13 +538,13 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         })
 
         val mappedPhase = when (phaseInput) {
-            "RYB" -> "A"
-            "R" -> "A"
-            "RY"  -> "B"
-            "B"   -> "C"
-            "RB" ->  "C"
-            "YB"  -> "C"
-            "Y"   -> "B"
+            "RYB" -> "R"
+            "R" -> "R"
+            "RY"  -> "Y"
+            "B"   -> "B"
+            "RB" ->  "B"
+            "YB"  -> "B"
+            "Y"   -> "Y"
             else -> {
                 binding.swipeRefresh.isRefreshing = false
                 binding.etphases.error = "Invalid Phase"
@@ -684,20 +561,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == REQ_ENABLE_BT) {
-            if (resultCode == RESULT_OK) {
-                if (showBleDialogAfterEnable) {
-                    showBleScanDialog()
-                }
-                startBleScan()
-                showBleDialogAfterEnable = false
-            } else {
-                Toast.makeText(this, "Bluetooth required to scan", Toast.LENGTH_SHORT).show()
-                showBleDialogAfterEnable = false
-            }
-            return
-        }
 
         if (requestCode == CAMERA_REQ && resultCode == RESULT_OK) {
             val bitmap = data?.extras?.get("data") as? Bitmap
@@ -806,9 +669,9 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         }
 
         val mappedPhase = when (normalized) {
-            "RYB", "R" -> "A"
-            "RY", "Y" -> "B"
-            "B", "RB", "YB" -> "C"
+            "RYB", "R" -> "R"
+            "RY", "Y" -> "Y"
+            "B", "RB", "YB" -> "B"
             else -> return
         }
 
@@ -827,14 +690,16 @@ class ConsumerDetailsActivity : AppCompatActivity() {
     private data class ParsedBleData(
         val phase: String?,
         val dtu: String?,
-        val ping: String?
+        val deviceId: String?,
+        val ping: String?,
+        val valid: Boolean
     )
 
     private fun updateDialogFromBleText(raw: String): ParsedBleData {
         lastBleText = raw
         val text = raw.trim()
         if (text.isBlank()) {
-            lastParsedBle = ParsedBleData(null, null, null)
+            lastParsedBle = ParsedBleData(null, null, null, null, false)
             return lastParsedBle!!
         }
 
@@ -846,22 +711,40 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             else -> null
         }
 
-        val pingMatch = Regex("AVG\\s*=\\s*(\\d+)", RegexOption.IGNORE_CASE).find(text)
-        val ping = pingMatch?.groupValues?.getOrNull(1)
+        val pingToken = Regex("AVG\\s*=\\s*([^\\s]+)", RegexOption.IGNORE_CASE).find(text)
+            ?.groupValues
+            ?.getOrNull(1)
+        val pingNumber = pingToken?.toIntOrNull()
+        val pingValid = pingToken == null || (pingNumber != null && pingNumber in 0..4095)
+        if (!pingValid) {
+            lastParsedBle = ParsedBleData(null, null, null, null, false)
+            return lastParsedBle!!
+        }
+        val ping = pingNumber?.toString()
 
-        val dtuMatch = Regex("DTUID\\s*([A-Z0-9]+)", RegexOption.IGNORE_CASE).find(text)
-        val dtu = dtuMatch?.groupValues?.getOrNull(1)
+        val dtuMatch = Regex("DTUID\\s*[A-Z0-9]+", RegexOption.IGNORE_CASE).find(text)
+        val dtu = dtuMatch?.value?.replace(" ", "")
+        val deviceId = Regex("\\bFU[A-Z0-9]+\\b", RegexOption.IGNORE_CASE)
+            .find(text)
+            ?.value
+            ?.uppercase(Locale.getDefault())
 
-        if (phase != null || ping != null || dtu != null) {
-            bleDataLabel?.text = phase ?: "RAW"
+        if (phase != null || ping != null || dtu != null || deviceId != null) {
+            bleDataLabel?.text = if (phase != null) "Phase : $phase" else "RAW"
             if (dtu != null) {
-                blePhaseDtuLabel?.text = "DT: $dtu"
+                blePhaseDtuLabel?.text = "DTU: $dtu"
                 blePhaseDtuLabel?.visibility = View.VISIBLE
             } else {
                 blePhaseDtuLabel?.visibility = View.GONE
             }
+            if (deviceId != null) {
+                blePhaseDeviceIdLabel?.text = "Device ID: $deviceId"
+                blePhaseDeviceIdLabel?.visibility = View.VISIBLE
+            } else {
+                blePhaseDeviceIdLabel?.visibility = View.GONE
+            }
             if (ping != null) {
-                blePhasePingLabel?.text = "Ping: $ping"
+                blePhasePingLabel?.text = "RSSI: $ping"
                 blePhasePingLabel?.visibility = View.VISIBLE
             } else {
                 blePhasePingLabel?.visibility = View.GONE
@@ -869,9 +752,10 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         } else {
             bleDataLabel?.text = text
             blePhaseDtuLabel?.visibility = View.GONE
+            blePhaseDeviceIdLabel?.visibility = View.GONE
             blePhasePingLabel?.visibility = View.GONE
         }
-        lastParsedBle = ParsedBleData(phase, dtu, ping)
+        lastParsedBle = ParsedBleData(phase, dtu, deviceId, ping, true)
         return lastParsedBle!!
     }
 
@@ -1073,11 +957,13 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             if (grantResults.isNotEmpty() &&
                 grantResults.all { it == PackageManager.PERMISSION_GRANTED }
             ) {
-                if (bluetoothAdapter?.isEnabled == true) {
-                    startBleScan()
-                } else {
-                    startActivityForResult(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), REQ_ENABLE_BT)
-                }
+                bleReadRequested = true
+                showBleDataDialog()
+                bleDataLabel?.text = "Waiting for data..."
+                bleDataLabel?.visibility = View.VISIBLE
+                blePhaseStatusLabel?.text = "Status: Reading..."
+                blePhaseConfirmBtn?.isEnabled = false
+                requestBleStatus()
             } else {
                 Toast.makeText(this, "Bluetooth Permission Required!", Toast.LENGTH_SHORT).show()
             }

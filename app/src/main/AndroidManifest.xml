@@ -65,6 +65,7 @@
             android:name=".service.BluetoothLeService"
             android:exported="false"
             android:foregroundServiceType="connectedDevice|location"
+            android:stopWithTask="false"
             tools:targetApi="29" />
         <activity
             android:name=".ui.SplashActivity"
