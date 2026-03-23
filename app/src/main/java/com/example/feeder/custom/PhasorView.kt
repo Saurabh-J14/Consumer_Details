@@ -15,7 +15,7 @@ class PhasorView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
-    var needleAngle = 30f
+    var needleAngle = 0f
         set(value) {
             field = value.coerceIn(0f, 360f)
             invalidate()
@@ -45,7 +45,6 @@ class PhasorView @JvmOverloads constructor(
         alpha = 175
     }
 
-    // 🔥 Arrow Paint
     private val arrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
         style = Paint.Style.FILL
@@ -78,10 +77,10 @@ class PhasorView @JvmOverloads constructor(
 
     fun startFiveSecondRotation(targetPhase: String) {
         val targetAngle = when (targetPhase.uppercase()) {
-            "R" -> 330f
-            "Y" -> 90f
-            "B" -> 210f
-            else -> 30f
+            "R" -> 0f
+            "Y" -> 120f
+            "B" -> 240f
+            else -> 0f
         }
 
         ValueAnimator.ofFloat(needleAngle, targetAngle).apply {
@@ -102,10 +101,8 @@ class PhasorView @JvmOverloads constructor(
         val radius = min(width, height) * 0.375f
         val oval = RectF(cx - radius, cy - radius, cx + radius, cy + radius)
 
-        // Outer Circle
         canvas.drawCircle(cx, cy, radius, borderPaint)
 
-        // Phase Sectors
         sectorPaint.color = phaseColors["R"]!!
         canvas.drawArc(oval, 330f + angleOffset.toFloat(), 60f, true, sectorPaint)
 
@@ -115,11 +112,9 @@ class PhasorView @JvmOverloads constructor(
         sectorPaint.color = phaseColors["B"]!!
         canvas.drawArc(oval, 210f + angleOffset.toFloat(), 60f, true, sectorPaint)
 
-        // Gray fan
         val adjustedNeedleAngle = needleAngle + angleOffset.toFloat()
         canvas.drawArc(oval, adjustedNeedleAngle - 60f, 120f, true, grayFanPaint)
 
-        // Degree lines
         for (deg in 0 until 360 step 30) {
             val adjustedDeg = deg + angleOffset.toFloat()
             val rad = Math.toRadians(adjustedDeg.toDouble())
@@ -149,16 +144,14 @@ class PhasorView @JvmOverloads constructor(
         })
     }
 
-    // 🔥 Flat Body + Triangle Head Arrow
     private fun drawArrow(canvas: Canvas, cx: Float, cy: Float, length: Float) {
 
         val rad = Math.toRadians(needleAngle + angleOffset)
 
-        // 🔽 Size Reduced Here
-        val bodyLength = length * 0.55f     // pehle 0.65f tha
-        val headLength = length * 0.25f     // pehle 0.35f tha
-        val bodyWidth = 18f                 // pehle 28f tha
-        val headWidth = 45f                 // pehle 70f tha
+        val bodyLength = length * 0.55f
+        val headLength = length * 0.25f
+        val bodyWidth = 18f
+        val headWidth = 45f
 
         val cosA = cos(rad).toFloat()
         val sinA = sin(rad).toFloat()

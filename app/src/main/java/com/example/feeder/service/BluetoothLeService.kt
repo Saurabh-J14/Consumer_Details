@@ -172,8 +172,7 @@ class BluetoothLeService : Service() {
     @SuppressLint("MissingPermission")
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     override fun onDestroy() {
-        stopScan()
-        disconnect()
+        cleanupService()
         super.onDestroy()
     }
 
@@ -195,6 +194,25 @@ class BluetoothLeService : Service() {
         } else {
             ensureForeground(title, text)
         }
+    }
+
+    private fun stopForegroundIfNeeded() {
+        if (isForegroundStarted) {
+            stopForeground(true)
+            isForegroundStarted = false
+        }
+    }
+
+    private fun cleanupService() {
+        stopScan()
+        disconnect()
+        stopForegroundIfNeeded()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        cleanupService()
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
     }
 
     private fun buildNotification(title: String, text: String): Notification {
@@ -269,13 +287,6 @@ class BluetoothLeService : Service() {
         discoveredAddresses.clear()
         val settingsBuilder = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            bluetoothAdapter?.isLeExtendedAdvertisingSupported == true
-        ) {
-            settingsBuilder.setLegacy(false)
-            settingsBuilder.setPhy(ScanSettings.PHY_LE_ALL_SUPPORTED)
-        }
 
         scanner?.startScan(null, settingsBuilder.build(), scanCallback)
         isScanning = true
@@ -550,7 +561,7 @@ class BluetoothLeService : Service() {
     private fun looksLikeJson(text: String): Boolean {
         val trimmed = text.trim()
         return (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-            (trimmed.startsWith("[") && trimmed.endsWith("]"))
+                (trimmed.startsWith("[") && trimmed.endsWith("]"))
     }
 
     private fun isMostlyPrintable(text: String): Boolean {
