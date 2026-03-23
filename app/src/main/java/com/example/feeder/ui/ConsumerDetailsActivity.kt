@@ -21,14 +21,12 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.text.TextUtils
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.google.android.material.snackbar.Snackbar
 import com.example.feeder.R
 import com.example.feeder.data.remote.RetrofitClient
 import com.example.feeder.databinding.ActivityConsumerDetailsBinding
@@ -37,6 +35,7 @@ import com.example.feeder.ui.base.ConsumerUpdateViewModelFactory
 import com.example.feeder.ui.viewModel.ConsumerUpdateViewModel
 import com.example.feeder.utils.FusedLocationTracker
 import com.example.feeder.utils.PrefManager
+import com.google.android.material.snackbar.Snackbar
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.charset.Charset
@@ -98,7 +97,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
             binding.imgPhoto.visibility = View.GONE
             checkCameraPermission()
         }
-        binding.phasorView.setRotation(45f)
         setupConnectDeviceButton()
 
         setupPhaseButton()
@@ -229,13 +227,10 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                         }
                         val totalChars = serviceGroups.sumOf { it.chars.size }
                         if (totalChars == 0) {
-                            Log.d(TAG, "Readable characteristics: none")
                             blePhaseStatusLabel?.text = "No readable characteristics found"
                         } else {
-                            Log.d(TAG, "Readable characteristics: $totalChars in ${serviceGroups.size} services")
                             autoReadChar = serviceGroups.flatMap { it.chars }.firstOrNull()
                             if (!bleReadRequested) {
-                                // Cache the latest readable characteristic list, but do not read until requested.
                             } else if (autoReadChar == null) {
                                 blePhaseStatusLabel?.text = "No readable characteristics found"
                             } else {
@@ -245,7 +240,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                             }
                         }
                     } else {
-                        Log.d(TAG, "Characteristics: none")
                         blePhaseStatusLabel?.text = "No characteristics found"
                     }
                 }
@@ -267,7 +261,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                             status.startsWith("Notify")
                     if (isCharStatus) return
                     if (status.startsWith("Connected")) {
-                        Log.d(TAG, "BLE connected: $status")
                         blePhaseStatusLabel?.text = "Status: Connected"
                         bleServicesStatusLabel?.text = "Status: Connected"
                         if (!isBleConnected) {
@@ -290,21 +283,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                     val type = intent.getStringExtra(BluetoothLeService.EXTRA_DATA_TYPE)
                     val text = intent.getStringExtra(BluetoothLeService.EXTRA_DATA_TEXT)
                     val bytes = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA_BYTES)
-                    Log.d(
-                        TAG,
-                        "BLE data received: type=$type, textPreview=${text?.take(80)}, bytes=${bytes?.size ?: 0}"
-                    )
-                    if (!text.isNullOrBlank()) {
-                        val fullText = text.take(2000)
-                        Log.d(TAG, "BLE data text (up to 2000 chars): $fullText")
-                    }
-                    if (bytes != null && bytes.isNotEmpty()) {
-                        val hex = bytes.take(256).joinToString("") { "%02X".format(it) }
-                        Log.d(TAG, "BLE data bytes (first 256 bytes hex): $hex")
-                    }
-                    val hexPreview = bytes?.joinToString(" ") { "%02X".format(it) } ?: "-"
                     val textDisplay = text ?: bytes?.toString(Charsets.UTF_8) ?: "-"
-                    val display = "Text:\n$textDisplay\n\nHex:\n$hexPreview"
                     val parsed = updateDialogFromBleText(textDisplay)
                     if (!parsed.valid) {
                         blePhaseStatusLabel?.text = "Invalid data received from the field unit"
@@ -416,7 +395,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 tvStatus.text = "Status: Reading..."
                 btnConfirm.isEnabled = false
                 tvLabel.visibility = View.INVISIBLE
-                phasor.needleAngle = 90f
+                phasor.needleAngle = 0f
                 readCharacteristic(target.serviceUuid, target.charUuid)
             }
         }
@@ -614,7 +593,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 FeederId = binding.etfeedr.text.toString(),
                 Feeder_Name = binding.txtFeedername.text.toString(),
                 Substation_Name = binding.txtSubstation.text.toString(),
-                PhaseDesignation = phase,   // validated value
+                PhaseDesignation = phase,
                 Voltage = binding.etvoltage.text.toString(),
                 DTCName = binding.etdtcName.text.toString(),
                 DTCCode = "356",
@@ -676,7 +655,6 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         }
 
         val phasor = blePhasePhasor ?: return
-        val label = bleDataLabel ?: return
         val confirm = blePhaseConfirmBtn ?: return
 
         confirm.isEnabled = false
