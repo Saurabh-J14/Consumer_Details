@@ -43,8 +43,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class ConsumerDetailsActivity : AppCompatActivity() {
-
-    companion object { private const val TAG = "BLE Connectivity" }
     private lateinit var binding: ActivityConsumerDetailsBinding
     private lateinit var prefManager: PrefManager
     private val BT_PERMISSION_REQ = 1010
@@ -143,11 +141,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                 putExtra(BluetoothLeService.EXTRA_DEVICE_ADDRESS, address)
             }
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
-        }
+        startService(intent)
     }
 
     private fun requestBleStatus() {
@@ -183,17 +177,22 @@ class ConsumerDetailsActivity : AppCompatActivity() {
 
         return true
     }
+
+    private fun hasBlePermissions(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+        } else {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        }
+    }
     private fun readCharacteristic(serviceUuid: String, charUuid: String) {
         val intent = Intent(this, BluetoothLeService::class.java).apply {
             action = BluetoothLeService.ACTION_READ_CHAR
             putExtra(BluetoothLeService.EXTRA_SERVICE_UUID, serviceUuid)
             putExtra(BluetoothLeService.EXTRA_CHAR_UUID, charUuid)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
-        }
+        startService(intent)
     }
 
 
@@ -295,7 +294,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                     bleDataLabel?.visibility = View.VISIBLE
                     blePhaseStatusLabel?.text = "Status: Receiving data"
                     if (parsed.phase != null) {
-                        applyPhaseFromBleData(parsed.phase)
+                        getPhaseData(parsed.phase)
                     }
                     saveBleTextToFile(textDisplay)
                     val enableConfirm = parsed.phase != null && parsed.dtu != null
@@ -329,7 +328,9 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         } else {
             registerReceiver(bleReceiver, filter)
         }
-        requestBleStatus()
+        if (hasBlePermissions()) {
+            requestBleStatus()
+        }
     }
 
     override fun onResume() {
@@ -635,7 +636,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         Toast.makeText(this, message ?: "Something went wrong", Toast.LENGTH_SHORT).show()
     }
 
-    private fun applyPhaseFromBleData(raw: String) {
+    private fun getPhaseData(raw: String) {
         val token = raw.trim().uppercase(Locale.getDefault()).split(Regex("\\s+")).firstOrNull() ?: return
         val cleaned = token.replace(Regex("[^A-Z]"), "")
         if (cleaned.isBlank()) return
