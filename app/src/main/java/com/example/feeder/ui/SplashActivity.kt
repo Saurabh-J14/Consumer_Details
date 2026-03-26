@@ -50,6 +50,12 @@ class SplashActivity : AppCompatActivity() {
             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
         )
 
+//        spannable.setSpan(
+//            ForegroundColorSpan(ContextCompat.getColor(this, R.color.black)),
+//            11,
+//            text.length,
+//            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+//        )
 
         binding.tvHeader.text = spannable
 

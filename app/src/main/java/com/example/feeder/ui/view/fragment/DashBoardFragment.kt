@@ -192,11 +192,7 @@ class DashBoardFragment : Fragment() {
                 putExtra(BluetoothLeService.EXTRA_DEVICE_ADDRESS, address)
             }
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            requireContext().startForegroundService(intent)
-        } else {
-            requireContext().startService(intent)
-        }
+        requireContext().startService(intent)
     }
 
     private fun requestBleStatus() {
@@ -332,6 +328,15 @@ class DashBoardFragment : Fragment() {
             return false
         }
         return true
+    }
+
+    private fun hasBlePermissions(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+        } else {
+            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        }
     }
 
     private val bleReceiver = object : BroadcastReceiver() {
@@ -765,7 +770,9 @@ class DashBoardFragment : Fragment() {
             requireContext().registerReceiver(bleReceiver, filter)
         }
         refreshPairedDevices()
-        requestBleStatus()
+        if (hasBlePermissions()) {
+            requestBleStatus()
+        }
     }
 
     override fun onStop() {

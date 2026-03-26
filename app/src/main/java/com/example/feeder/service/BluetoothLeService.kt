@@ -107,8 +107,11 @@ class BluetoothLeService : Service() {
     @SuppressLint("MissingPermission")
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        ensureForegroundStarted()
-        when (intent?.action) {
+        val action = intent?.action
+        if (requiresForeground(action) && !ensureForegroundStartedIfPermitted()) {
+            return START_NOT_STICKY
+        }
+        when (action) {
             ACTION_START_SCAN -> {
                 updateForeground("Scanning for BLE devices", "Scanning...")
                 startScan()
@@ -185,6 +188,28 @@ class BluetoothLeService : Service() {
     private fun ensureForegroundStarted() {
         if (!isForegroundStarted) {
             ensureForeground("BLE Service", "Ready")
+        }
+    }
+
+    private fun ensureForegroundStartedIfPermitted(): Boolean {
+        if (isForegroundStarted) return true
+        if (!canStartConnectedDeviceForeground()) {
+            sendStatus("Bluetooth permission missing")
+            stopSelf()
+            return false
+        }
+        ensureForegroundStarted()
+        return true
+    }
+
+    private fun requiresForeground(action: String?): Boolean {
+        return when (action) {
+            ACTION_START_SCAN,
+            ACTION_CONNECT,
+            ACTION_SUBSCRIBE_CHAR,
+            ACTION_READ_CHAR,
+            ACTION_REFRESH_SERVICES -> true
+            else -> false
         }
     }
 
@@ -271,6 +296,13 @@ class BluetoothLeService : Service() {
         } else {
             true
         }
+    }
+
+    private fun canStartConnectedDeviceForeground(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
+        return checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED ||
+                checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED ||
+                checkSelfPermission(Manifest.permission.BLUETOOTH_ADVERTISE) == PackageManager.PERMISSION_GRANTED
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
