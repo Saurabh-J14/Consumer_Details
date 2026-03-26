@@ -43,8 +43,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class ConsumerDetailsActivity : AppCompatActivity() {
-
-    companion object { private const val TAG = "BLE Connectivity" }
     private lateinit var binding: ActivityConsumerDetailsBinding
     private lateinit var prefManager: PrefManager
     private val BT_PERMISSION_REQ = 1010
@@ -295,7 +293,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
                     bleDataLabel?.visibility = View.VISIBLE
                     blePhaseStatusLabel?.text = "Status: Receiving data"
                     if (parsed.phase != null) {
-                        applyPhaseFromBleData(parsed.phase)
+                        getPhaseData(parsed.phase)
                     }
                     saveBleTextToFile(textDisplay)
                     val enableConfirm = parsed.phase != null && parsed.dtu != null
@@ -635,7 +633,7 @@ class ConsumerDetailsActivity : AppCompatActivity() {
         Toast.makeText(this, message ?: "Something went wrong", Toast.LENGTH_SHORT).show()
     }
 
-    private fun applyPhaseFromBleData(raw: String) {
+    private fun getPhaseData(raw: String) {
         val token = raw.trim().uppercase(Locale.getDefault()).split(Regex("\\s+")).firstOrNull() ?: return
         val cleaned = token.replace(Regex("[^A-Z]"), "")
         if (cleaned.isBlank()) return

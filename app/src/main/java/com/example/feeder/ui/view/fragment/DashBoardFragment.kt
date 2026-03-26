@@ -223,6 +223,11 @@ class DashBoardFragment : Fragment() {
     }
 
     private fun startBleScan() {
+        if (isScanning) {
+            refreshPairedDevices()
+            bleScanStatusLabel?.text = "Status: Scanning..."
+            return
+        }
         deviceAddresses.clear()
         deviceLabels.clear()
         deviceAdapter.notifyDataSetChanged()
@@ -267,7 +272,15 @@ class DashBoardFragment : Fragment() {
         startBleService(BluetoothLeService.ACTION_CONNECT, address)
     }
 
+    private fun dismissBleScanDialog() {
+        bleScanDialog?.dismiss()
+        bleScanDialog = null
+        bleScanStatusLabel = null
+    }
+
     private fun showBleScanDialog() {
+        val hostActivity = activity ?: return
+        if (!isAdded || isDetached || hostActivity.isFinishing || hostActivity.isDestroyed) return
         if (bleScanDialog?.isShowing == true) return
         val dialogView = layoutInflater.inflate(R.layout.dialog_ble_devices, null)
         val list = dialogView.findViewById<android.widget.ListView>(R.id.listBleDialog)
@@ -283,6 +296,12 @@ class DashBoardFragment : Fragment() {
             .setView(dialogView)
             .setCancelable(true)
             .create()
+        dialog.setOnDismissListener {
+            if (bleScanDialog === dialog) {
+                bleScanDialog = null
+                bleScanStatusLabel = null
+            }
+        }
         dialog.show()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         bleScanDialog = dialog
@@ -336,12 +355,21 @@ class DashBoardFragment : Fragment() {
                 }
                 BluetoothLeService.ACTION_STATUS -> {
                     val status = intent.getStringExtra(BluetoothLeService.EXTRA_STATUS) ?: return
+                    if (status.startsWith("Scanning")) {
+                        isScanning = true
+                    } else if (
+                        status.startsWith("Scan stopped") ||
+                        status.startsWith("Connected") ||
+                        status.startsWith("Disconnected") ||
+                        status.startsWith("Device disconnected")
+                    ) {
+                        isScanning = false
+                    }
                     bleScanStatusLabel?.text = "Status: $status"
                     updateBleToolbarStatus(status)
                     if (status.startsWith("Connected")) {
-                        isScanning = false
                         scanHandler.removeCallbacks(stopScanRunnable)
-                        bleScanDialog?.dismiss()
+                        dismissBleScanDialog()
                     }
                 }
             }
@@ -743,6 +771,7 @@ class DashBoardFragment : Fragment() {
     override fun onStop() {
         super.onStop()
         scanHandler.removeCallbacks(stopScanRunnable)
+        dismissBleScanDialog()
         try {
             requireContext().unregisterReceiver(bleReceiver)
         } catch (_: Exception) {
@@ -835,6 +864,7 @@ class DashBoardFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        dismissBleScanDialog()
         super.onDestroyView()
         _binding = null
     }

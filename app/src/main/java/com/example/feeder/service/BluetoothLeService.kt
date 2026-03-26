@@ -344,7 +344,7 @@ class BluetoothLeService : Service() {
         bluetoothGatt?.close()
         bluetoothGatt = null
         connectedDeviceName = null
-        updateNotification("Disconnected", "No device")
+        stopForegroundIfNeeded()
         sendStatus("Disconnected")
     }
 
